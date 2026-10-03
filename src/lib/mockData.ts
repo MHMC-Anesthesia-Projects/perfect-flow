@@ -1,4 +1,4 @@
-import { EpicPatientCase, OperatingRoom, BoardRunner, User, FlowState } from '@/types/flow';
+import { EpicPatientCase, OperatingRoom, BoardRunner, User, FlowState, EmrApiConfig } from '@/types/flow';
 
 export const initialUsers: User[] = [
   { id: 'u1', username: 'runner', displayName: 'Board Runner (Alaniz, P / Veronica N)', role: 'board_runner', pin: '1234' },
@@ -36,8 +36,21 @@ export const initialRunners: BoardRunner[] = [
   { id: 'r11', title: 'ORT 2ND LATE', staffName: 'Miller, D. (CRNA)', pagerOrPhone: 'x5512', role: 'late' }
 ];
 
+export const initialEmrConfig: EmrApiConfig = {
+  provider: 'epic_optime',
+  endpointUrl: 'https://epic-gateway.hospital.org/interconnect-fhir/v1/optime',
+  clientId: 'perfect-flow-epic-client-7734',
+  clientSecretMasked: '••••••••••••••••••••••••3a9b',
+  facilityCode: 'MHMC (Memorial Hermann Medical Center)',
+  status: 'connected',
+  lastPingTime: '18:25:00',
+  syncIntervalSec: 30,
+  autoSyncEnabled: true,
+  minTurnoverBufferMinutes: 15
+};
+
 export const initialPatients: EpicPatientCase[] = [
-  // 1. MC OR 06: Active Case (Jose Ernesto Perez - based on screenshot)
+  // 1. MC OR 06: Active Case 3 (Jose Ernesto Perez - exact replica of image)
   {
     id: 'pt-1015987',
     epicCaseId: '1015987',
@@ -71,10 +84,21 @@ export const initialPatients: EpicPatientCase[] = [
     preOpRN: 'Yenis S.',
     currentPhase: 'in_surgery',
     scheduledArrival: '09:30',
+
+    // Exact times from OR Control screenshot:
+    // Sched: In-Room 10:55 | Cut 10:55 | Out-Room 12:55
+    schedInRoom: '10:55',
+    schedCut: '10:55',
+    schedOutRoom: '12:55',
     scheduledStartTime: '10:55',
     scheduledEndTime: '12:55',
+
+    // Act/Upd: In-Room 11:15 | Cut 11:30 | Surgery End 11:55 | Out-Room 12:00
     inRoomTime: '11:15',
     surgeryStartTime: '11:30', // Cut
+    surgeryEndTime: '11:55',   // Surgery End
+    outRoomTime: undefined,    // active in room
+
     preOpReady: true,
     preOpReadyTime: '11:09',
     surgeonSeen: true,
@@ -114,7 +138,7 @@ export const initialPatients: EpicPatientCase[] = [
     }
   },
 
-  // 2. MC OR 05: Closing Case (Arthur Gonzalez)
+  // 2. MC OR 05: Closing Case 1 (Arthur Gonzalez / Quentin Williams)
   {
     id: 'pt-1015072',
     epicCaseId: '1015072',
@@ -145,6 +169,9 @@ export const initialPatients: EpicPatientCase[] = [
     scrubTech: 'Kenji M.',
     currentPhase: 'closing',
     scheduledArrival: '06:30',
+    schedInRoom: '08:00',
+    schedCut: '08:15',
+    schedOutRoom: '10:15',
     scheduledStartTime: '08:00',
     scheduledEndTime: '10:15',
     inRoomTime: '08:21',
@@ -183,6 +210,7 @@ export const initialPatients: EpicPatientCase[] = [
   },
 
   // 3. MC OR 05: Queued Case 2 (Linda Cortez - in Pre-Op Bay 02)
+  // Scheduled In-Room: 10:45 (30-min buffer after Case 1 ends at 10:15, safely > 15m buffer)
   {
     id: 'pt-1015503',
     epicCaseId: '1015503',
@@ -211,6 +239,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpBay: 'Bay 02',
     currentPhase: 'preop',
     scheduledArrival: '09:00',
+    schedInRoom: '10:45',
+    schedCut: '11:00',
+    schedOutRoom: '12:30',
     scheduledStartTime: '10:45',
     scheduledEndTime: '12:30',
     preOpReady: true,
@@ -251,7 +282,7 @@ export const initialPatients: EpicPatientCase[] = [
     }
   },
 
-  // 4. MC OR 01: Active Case (Eleanor Vance - Total Knee)
+  // 4. MC OR 01: Active Case 1 (Eleanor Vance - Total Knee)
   {
     id: 'pt-1016204',
     epicCaseId: '1016204',
@@ -283,6 +314,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpRN: 'David C.',
     currentPhase: 'in_surgery',
     scheduledArrival: '07:00',
+    schedInRoom: '08:30',
+    schedCut: '09:00',
+    schedOutRoom: '11:30',
     scheduledStartTime: '08:30',
     scheduledEndTime: '11:30',
     inRoomTime: '09:10',
@@ -355,6 +389,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpBay: 'Bay 04',
     currentPhase: 'preop',
     scheduledArrival: '09:30',
+    schedInRoom: '11:15',
+    schedCut: '11:45',
+    schedOutRoom: '13:00',
     scheduledStartTime: '11:15',
     scheduledEndTime: '13:00',
     preOpReady: true,
@@ -419,6 +456,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpBay: 'Bay 01',
     currentPhase: 'preop',
     scheduledArrival: '10:00',
+    schedInRoom: '11:30',
+    schedCut: '12:00',
+    schedOutRoom: '13:45',
     scheduledStartTime: '11:30',
     scheduledEndTime: '13:45',
     delayReason: 'Awaiting Surgeon arrival for mandatory surgical site mark and updated H&P',
@@ -483,6 +523,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpBay: 'Bay 03',
     currentPhase: 'preop',
     scheduledArrival: '10:30',
+    schedInRoom: '12:00',
+    schedCut: '12:30',
+    schedOutRoom: '14:30',
     scheduledStartTime: '12:00',
     scheduledEndTime: '14:30',
     preOpReady: true,
@@ -550,6 +593,9 @@ export const initialPatients: EpicPatientCase[] = [
     preOpBay: 'Bay 05',
     currentPhase: 'preop',
     scheduledArrival: '10:45',
+    schedInRoom: '12:15',
+    schedCut: '12:45',
+    schedOutRoom: '15:00',
     scheduledStartTime: '12:15',
     scheduledEndTime: '15:00',
     preOpReady: true,
@@ -616,6 +662,9 @@ export const initialPatients: EpicPatientCase[] = [
     pacuLocation: 'PACU Bay 03',
     currentPhase: 'pacu',
     scheduledArrival: '06:45',
+    schedInRoom: '08:00',
+    schedCut: '08:30',
+    schedOutRoom: '10:15',
     scheduledStartTime: '08:00',
     scheduledEndTime: '10:15',
     inRoomTime: '08:05',
@@ -648,7 +697,7 @@ export const initialPatients: EpicPatientCase[] = [
     pacuTransportComplete: true,
     readyForAnesSignout: true,
     anesSignoutTime: '11:05',
-    pacuToFloorHold: true, // Floor bed MH8.834 not ready
+    pacuToFloorHold: true,
     xrayOrdered: true,
     ptOrdered: true,
     recoveryNeeds: 'Inpatient Bed Hold: Floor MH8 bed clean pending. Vital signs stable, Aldrete score 9/10.',
@@ -687,6 +736,9 @@ export const initialPatients: EpicPatientCase[] = [
     phase2Location: 'Phase II Station 02',
     currentPhase: 'phase2',
     scheduledArrival: '07:30',
+    schedInRoom: '09:00',
+    schedCut: '09:20',
+    schedOutRoom: '10:15',
     scheduledStartTime: '09:00',
     scheduledEndTime: '10:15',
     inRoomTime: '09:05',
@@ -740,6 +792,8 @@ export function getInitialFlowState(): FlowState {
     patients: initialPatients,
     rooms: initialRooms,
     runners: initialRunners,
+    users: initialUsers,
+    emrConfig: initialEmrConfig,
     auditLogs: [
       {
         id: 'log-1',

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { EpicPatientCase, FlowState, OperatingRoom, PerioperativePhase, User } from '@/types/flow';
-import { initialUsers, getInitialFlowState } from '@/lib/mockData';
+import { EpicPatientCase, FlowState, OperatingRoom, PerioperativePhase, User, EmrApiConfig } from '@/types/flow';
+import { initialUsers, initialEmrConfig, getInitialFlowState } from '@/lib/mockData';
 import { HeaderNav } from '@/components/HeaderNav';
 import { BottomRibbon } from '@/components/BottomRibbon';
 import { RoomGridView } from '@/components/RoomGridView';
@@ -12,34 +12,28 @@ import { PacuRecoveryView } from '@/components/PacuRecoveryView';
 import { ProcedureDetailModal } from '@/components/ProcedureDetailModal';
 import { PinPadModal } from '@/components/PinPadModal';
 import { AddOnModal } from '@/components/AddOnModal';
+import { AdminModal } from '@/components/AdminModal';
 import { AuditDrawer } from '@/components/AuditDrawer';
 import { TouchscreenKeyboard } from '@/components/TouchscreenKeyboard';
 
 export default function PerfectFlowApp() {
-  // Theme state: defaults to dark OR surgical suite mode
   const [theme, setTheme] = useState<'whiteboard' | 'dark'>('dark');
-
-  // Application flow state
   const [flowState, setFlowState] = useState<FlowState>(getInitialFlowState());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-  // Active view
   const [currentView, setCurrentView] = useState<'grid' | 'timeline' | 'preop' | 'pacu'>('grid');
-
-  // Active user (Default to Board Runner for immediate interactive demo)
   const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]);
 
-  // Privacy and search
   const [hipaaProtected, setHipaaProtected] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedPhaseFilter, setSelectedPhaseFilter] = useState<PerioperativePhase | 'add_on' | null>(null);
 
-  // Selected patient for Procedure Detail Modal
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   // Modals state
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false);
   const [isAddOnModalOpen, setIsAddOnModalOpen] = useState<boolean>(false);
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
   const [isAuditOpen, setIsAuditOpen] = useState<boolean>(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
 
@@ -64,22 +58,18 @@ export default function PerfectFlowApp() {
     fetchState();
   }, []);
 
-  // Update HTML data-theme attribute
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Toggle Theme
   const handleToggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'whiteboard' : 'dark'));
   };
 
-  // Toggle HIPAA Privacy Mode
   const handleToggleHipaa = () => {
     setHipaaProtected(prev => !prev);
   };
 
-  // Reset Mock Demo Data
   const handleResetData = async () => {
     setIsSyncing(true);
     try {
@@ -101,9 +91,7 @@ export default function PerfectFlowApp() {
     }
   };
 
-  // Update Patient Case
   const handleUpdatePatient = async (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => {
-    // Optimistic local update
     setFlowState(prev => {
       const pIdx = prev.patients.findIndex(p => p.id === patientId);
       if (pIdx === -1) return prev;
@@ -129,7 +117,6 @@ export default function PerfectFlowApp() {
       };
     });
 
-    // Background server sync
     try {
       await fetch('/api/flow', {
         method: 'POST',
@@ -147,7 +134,6 @@ export default function PerfectFlowApp() {
     }
   };
 
-  // Add-On Case Created
   const handleAddPatient = async (newPatient: EpicPatientCase) => {
     setFlowState(prev => ({
       ...prev,
@@ -166,22 +152,123 @@ export default function PerfectFlowApp() {
       ]
     }));
 
-    // Trigger procedure modal for the newly added patient
     setSelectedPatientId(newPatient.id);
   };
 
-  // Filtered patient list
+  const handleSaveUsers = (updatedUsers: User[]) => {
+    setFlowState(prev => ({ ...prev, users: updatedUsers }));
+  };
+
+  const handleSaveEmrConfig = (updatedConfig: EmrApiConfig) => {
+    setFlowState(prev => ({ ...prev, emrConfig: updatedConfig }));
+  };
+
+  // Simulate an incoming emergency Add-On case directly from Epic OpTime HL7 interface
+  const handleSimulateEpicCase = async () => {
+    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const epicCaseId = `${Math.floor(1016800 + Math.random() * 2000)}`;
+
+    const epicSimulatedCase: EpicPatientCase = {
+      id: `pt-${epicCaseId}`,
+      epicCaseId,
+      mrn: `${Math.floor(151162000 + Math.random() * 9000)}`,
+      accountNumber: `1019814${Math.floor(5000 + Math.random() * 4000)}`,
+      patientName: 'Ramirez, Mateo',
+      patientInitials: 'RAM, M',
+      age: 38,
+      gender: 'M',
+      dob: '1988-04-12',
+      heightCm: 176,
+      weightKg: 81,
+      inpatientBed: 'Emergency Dept (Trauma Bay 2)',
+      isConfidential: false,
+      roomNumber: 'MC OR 04',
+      caseOrder: 'Add-On',
+      primaryProcedure: 'INCISION AND DRAINAGE OF RIGHT THIGH ABSCESS WITH FASCIOTOMY',
+      procedureCodes: ['27301', '27305'],
+      casePriority: 'emergent',
+      isAddOn: true,
+      addOnTime: timeNow,
+      addedBy: 'Epic OpTime HL7 Interface (Dr. Lee, K)',
+      anesthesiaType: 'General',
+      comments: 'EMERGENT ADD-ON FROM ED - EPIC OPTIME HL7 EVENT',
+      surgeon: 'Lee, K',
+      anesthesiologist: 'Alaniz, P',
+      currentPhase: 'preop',
+      scheduledArrival: timeNow,
+      schedInRoom: '13:00',
+      schedCut: '13:30',
+      schedOutRoom: '15:00',
+      scheduledStartTime: '13:00',
+      scheduledEndTime: '15:00',
+      preOpBay: 'Holding Bay 06',
+      preOpReady: false,
+      surgeonSeen: true,
+      surgeonSeenTime: timeNow,
+      hpComplete: 'yes',
+      surgicalConsent: 'signed',
+      anesthesiaConsent: 'pending',
+      siteMarked: 'yes',
+      anesthesiaReady: false,
+      anesthesiaTechReady: true,
+      blockStatus: 'not_needed',
+      reportCalled: false,
+      circPreopVisit: false,
+      roomReady: true,
+      bloodBankRequired: true,
+      latexAllergy: false,
+      infectionStatus: 'contact',
+      defibPacemaker: false,
+      anesthesiaTransport: true,
+      preOpBypass: false,
+      erasPathway: false,
+      scopeEgd: false,
+      pacuTransportComplete: false,
+      readyForAnesSignout: false,
+      pacuToFloorHold: false,
+      xrayOrdered: false,
+      ptOrdered: false
+    };
+
+    try {
+      await fetch('/api/epic/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ epicCase: epicSimulatedCase })
+      });
+    } catch {
+      // offline fallback
+    }
+
+    setFlowState(prev => ({
+      ...prev,
+      patients: [epicSimulatedCase, ...prev.patients],
+      auditLogs: [
+        {
+          id: `epic-log-${Date.now()}`,
+          timestamp: timeNow,
+          user: 'Epic OpTime Gateway',
+          action: 'EPIC_CASE_INGEST',
+          patientId: epicSimulatedCase.id,
+          patientName: epicSimulatedCase.patientName,
+          details: `Simulated Epic OpTime HL7 Add-On Case #${epicSimulatedCase.epicCaseId} placed in MC OR 04`
+        },
+        ...prev.auditLogs
+      ]
+    }));
+
+    setSelectedPatientId(epicSimulatedCase.id);
+  };
+
   const filteredPatients = useMemo(() => {
     let list = flowState.patients;
 
-    // Filter by phase ribbon tab
     if (selectedPhaseFilter === 'add_on') {
       list = list.filter(p => p.isAddOn);
     } else if (selectedPhaseFilter !== null) {
       list = list.filter(p => p.currentPhase === selectedPhaseFilter);
     }
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(p => 
@@ -203,7 +290,6 @@ export default function PerfectFlowApp() {
     return flowState.patients.find(p => p.id === selectedPatientId) || null;
   }, [flowState.patients, selectedPatientId]);
 
-  // Virtual keyboard text typing into search
   const handleVirtualKeyPress = (char: string) => {
     setSearchQuery(prev => prev + char);
   };
@@ -215,6 +301,8 @@ export default function PerfectFlowApp() {
   const handleVirtualEnter = () => {
     setIsKeyboardOpen(false);
   };
+
+  const minTurnoverMinutes = flowState.emrConfig?.minTurnoverBufferMinutes || 15;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
@@ -235,6 +323,7 @@ export default function PerfectFlowApp() {
         onSearchChange={setSearchQuery}
         isSyncing={isSyncing}
         onOpenAddOnModal={() => setIsAddOnModalOpen(true)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Main View Display */}
@@ -247,6 +336,7 @@ export default function PerfectFlowApp() {
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
           />
         )}
 
@@ -256,6 +346,7 @@ export default function PerfectFlowApp() {
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
           />
         )}
 
@@ -294,6 +385,8 @@ export default function PerfectFlowApp() {
         onUpdatePatient={handleUpdatePatient}
         currentUser={currentUser}
         hipaaProtected={hipaaProtected}
+        allPatients={flowState.patients}
+        minTurnoverMinutes={minTurnoverMinutes}
       />
 
       <PinPadModal
@@ -306,7 +399,19 @@ export default function PerfectFlowApp() {
         isOpen={isAddOnModalOpen}
         onClose={() => setIsAddOnModalOpen(false)}
         rooms={flowState.rooms}
+        allPatients={flowState.patients}
         onAddPatient={handleAddPatient}
+        minTurnoverMinutes={minTurnoverMinutes}
+      />
+
+      <AdminModal
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        users={flowState.users || initialUsers}
+        onSaveUsers={handleSaveUsers}
+        emrConfig={flowState.emrConfig || initialEmrConfig}
+        onSaveEmrConfig={handleSaveEmrConfig}
+        onSimulateEpicCase={handleSimulateEpicCase}
       />
 
       <AuditDrawer

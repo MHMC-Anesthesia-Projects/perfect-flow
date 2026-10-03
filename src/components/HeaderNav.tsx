@@ -6,7 +6,7 @@ import {
   Sun, Moon, Shield, Lock, Clock, Search, 
   RotateCw, Eye, EyeOff, Keyboard, Maximize, 
   Minimize, LayoutGrid, CalendarRange, 
-  Stethoscope, BedDouble, PlusCircle, CheckCircle2 
+  Stethoscope, BedDouble, PlusCircle, Settings, ShieldCheck 
 } from 'lucide-react';
 
 interface HeaderNavProps {
@@ -25,6 +25,7 @@ interface HeaderNavProps {
   onSearchChange: (q: string) => void;
   isSyncing: boolean;
   onOpenAddOnModal: () => void;
+  onOpenAdmin: () => void;
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
@@ -42,7 +43,8 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   searchQuery,
   onSearchChange,
   isSyncing,
-  onOpenAddOnModal
+  onOpenAddOnModal,
+  onOpenAdmin
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -232,6 +234,16 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
 
         {/* Role Badge / PIN login */}
         {getRoleBadge()}
+
+        {/* Admin Settings Button */}
+        <button
+          type="button"
+          onClick={onOpenAdmin}
+          className="header-btn icon-btn"
+          title="Admin Area: Manage Users, Epic EMR API, & Turnover Rules"
+        >
+          <Settings size={16} />
+        </button>
 
         {/* HIPAA Toggle */}
         <button

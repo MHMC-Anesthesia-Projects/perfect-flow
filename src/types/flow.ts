@@ -34,6 +34,19 @@ export interface FamilyContact {
   prefersPhoneCall: boolean;
 }
 
+export interface EmrApiConfig {
+  provider: 'epic_optime' | 'cerner_surginet' | 'meditech' | 'custom_fhir';
+  endpointUrl: string;
+  clientId: string;
+  clientSecretMasked: string;
+  facilityCode: string;
+  status: 'connected' | 'standby' | 'simulated' | 'error';
+  lastPingTime?: string;
+  syncIntervalSec: number;
+  autoSyncEnabled: boolean;
+  minTurnoverBufferMinutes: number; // default 15 min mandatory turnover rule
+}
+
 export interface EpicPatientCase {
   id: string; // Internal UUID
   epicCaseId: string; // e.g. "1015987"
@@ -77,12 +90,22 @@ export interface EpicPatientCase {
   // Perioperative Phase & Timing
   currentPhase: PerioperativePhase;
   scheduledArrival: string;
+
+  // Exact Timing Structure matching OR Control Image:
+  // Sched: In-Room, Cut, Out-Room
+  schedInRoom: string;  // e.g. "10:55"
+  schedCut: string;     // e.g. "10:55"
+  schedOutRoom: string; // e.g. "12:55"
+  
+  // Legacy / convenience mappings
   scheduledStartTime: string;
   scheduledEndTime: string;
-  inRoomTime?: string;
-  surgeryStartTime?: string; // Incision / Cut
-  surgeryEndTime?: string; // Closing
-  outRoomTime?: string;
+
+  // Act/Upd: In-Room, Cut, Surgery End (Closing), Out-Room
+  inRoomTime?: string;       // e.g. "11:15"
+  surgeryStartTime?: string; // Cut e.g. "11:30"
+  surgeryEndTime?: string;   // Surgery End e.g. "11:55"
+  outRoomTime?: string;      // e.g. "12:00"
   pacuArrivalTime?: string;
   phase2ArrivalTime?: string;
   completedTime?: string;
@@ -175,5 +198,7 @@ export interface FlowState {
   patients: EpicPatientCase[];
   rooms: OperatingRoom[];
   runners: BoardRunner[];
+  users: User[];
+  emrConfig: EmrApiConfig;
   auditLogs: AuditLogEntry[];
 }

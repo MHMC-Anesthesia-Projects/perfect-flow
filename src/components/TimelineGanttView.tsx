@@ -2,28 +2,28 @@
 
 import React, { useState, useEffect } from 'react';
 import { EpicPatientCase, OperatingRoom } from '@/types/flow';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, Plus, AlertTriangle } from 'lucide-react';
 
 interface TimelineGanttViewProps {
   rooms: OperatingRoom[];
   patients: EpicPatientCase[];
   onSelectPatient: (patient: EpicPatientCase) => void;
   hipaaProtected: boolean;
+  minTurnoverMinutes?: number;
 }
 
 export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   rooms,
   patients,
   onSelectPatient,
-  hipaaProtected
+  hipaaProtected,
+  minTurnoverMinutes = 15
 }) => {
-  // Timeline hours from 07:00 to 19:00 (12 hours = 720 minutes)
   const START_HOUR = 7;
   const END_HOUR = 19;
   const TOTAL_HOURS = END_HOUR - START_HOUR;
   const TOTAL_MINUTES = TOTAL_HOURS * 60;
 
-  // Pixels per minute
   const PX_PER_MINUTE = 2.2;
   const TOTAL_WIDTH = TOTAL_MINUTES * PX_PER_MINUTE;
 
@@ -38,7 +38,7 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
       setCurrentMinutesFromStart(totalMins);
     };
     updateScrubber();
-    const interval = setInterval(updateScrubber, 30000); // Update every 30s
+    const interval = setInterval(updateScrubber, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -229,6 +229,13 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
           {rooms.map((room) => {
             const roomPatients = patients.filter(p => p.roomNumber === room.name);
 
+            // Sort cases by start time to evaluate consecutive turnover buffers
+            const sortedCases = [...roomPatients].sort((a, b) => {
+              const aStart = timeToMinutes(a.inRoomTime || a.schedInRoom || a.scheduledStartTime);
+              const bStart = timeToMinutes(b.inRoomTime || b.schedInRoom || b.scheduledStartTime);
+              return aStart - bStart;
+            });
+
             return (
               <div
                 key={`track-${room.id}`}
@@ -240,13 +247,33 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                   alignItems: 'center'
                 }}
               >
-                {roomPatients.map((caseItem) => {
-                  const startMins = Math.max(0, timeToMinutes(caseItem.inRoomTime || caseItem.scheduledStartTime));
-                  const endMins = Math.min(TOTAL_MINUTES, timeToMinutes(caseItem.outRoomTime || caseItem.scheduledEndTime) || (startMins + 90));
+                {sortedCases.map((caseItem, idx) => {
+                  const startMins = Math.max(0, timeToMinutes(caseItem.inRoomTime || caseItem.schedInRoom || caseItem.scheduledStartTime));
+                  const endMins = Math.min(TOTAL_MINUTES, timeToMinutes(caseItem.outRoomTime || caseItem.schedOutRoom || caseItem.scheduledEndTime) || (startMins + 90));
                   const durationMins = Math.max(30, endMins - startMins);
 
                   const left = startMins * PX_PER_MINUTE;
                   const width = durationMins * PX_PER_MINUTE;
+
+                  // Check turnover buffer with next case
+                  let turnoverWarning: string | null = null;
+                  let turnoverConflictLeft = 0;
+                  let turnoverConflictWidth = 0;
+
+                  if (idx < sortedCases.length - 1) {
+                    const nextCase = sortedCases[idx + 1];
+                    const nextStartMins = Math.max(0, timeToMinutes(nextCase.inRoomTime || nextCase.schedInRoom || nextCase.scheduledStartTime));
+                    const bufferMins = nextStartMins - endMins;
+
+                    if (bufferMins < minTurnoverMinutes) {
+                      turnoverWarning = bufferMins < 0 
+                        ? `OVERLAP CONFLICT: Overlaps by ${Math.abs(bufferMins)}m!`
+                        : `TIGHT TURNOVER: ${bufferMins}m buffer (<${minTurnoverMinutes}m required)`;
+                      
+                      turnoverConflictLeft = endMins * PX_PER_MINUTE;
+                      turnoverConflictWidth = Math.max(16, (nextStartMins - endMins) * PX_PER_MINUTE);
+                    }
+                  }
 
                   let barBg = 'var(--phase-sched-bg)';
                   if (caseItem.currentPhase === 'in_surgery') barBg = 'var(--phase-surgery-bg)';
@@ -256,57 +283,81 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                   else if (caseItem.currentPhase === 'completed') barBg = 'var(--phase-complete-bg)';
 
                   return (
-                    <div
-                      key={caseItem.id}
-                      onClick={() => onSelectPatient(caseItem)}
-                      style={{
-                        position: 'absolute',
-                        left,
-                        width,
-                        height: 44,
-                        background: barBg,
-                        color: '#ffffff',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '4px 8px',
-                        cursor: 'pointer',
-                        zIndex: 5,
-                        boxShadow: 'var(--shadow-sm)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        transition: 'transform var(--transition-fast)'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.02)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                      title={`${caseItem.roomNumber} - ${caseItem.patientName} (${caseItem.primaryProcedure})`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 900 }}>
-                        {caseItem.isAddOn && (
-                          <span style={{ background: '#fff', color: 'var(--alert-red)', padding: '0 4px', borderRadius: 2, fontSize: 9, fontWeight: 900 }}>
-                            +
+                    <React.Fragment key={caseItem.id}>
+                      <div
+                        onClick={() => onSelectPatient(caseItem)}
+                        style={{
+                          position: 'absolute',
+                          left,
+                          width,
+                          height: 44,
+                          background: barBg,
+                          color: '#ffffff',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '4px 8px',
+                          cursor: 'pointer',
+                          zIndex: 5,
+                          boxShadow: 'var(--shadow-sm)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          transition: 'transform var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.02)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                        title={`${caseItem.roomNumber} - ${caseItem.patientName} (${caseItem.primaryProcedure})`}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 900 }}>
+                          {caseItem.isAddOn && (
+                            <span style={{ background: '#fff', color: 'var(--alert-red)', padding: '0 4px', borderRadius: 2, fontSize: 9, fontWeight: 900 }}>
+                              +
+                            </span>
+                          )}
+                          <span>#{caseItem.caseOrder}</span>
+                          <span>{caseItem.surgeon}</span>
+                          <span>•</span>
+                          <span style={{ opacity: 0.9 }}>
+                            {hipaaProtected ? caseItem.patientInitials : caseItem.patientName}
                           </span>
-                        )}
-                        <span>#{caseItem.caseOrder}</span>
-                        <span>{caseItem.surgeon}</span>
-                        <span>•</span>
-                        <span style={{ opacity: 0.9 }}>
-                          {hipaaProtected ? caseItem.patientInitials : caseItem.patientName}
-                        </span>
+                        </div>
+
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          opacity: 0.85,
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          marginTop: 2
+                        }}>
+                          {caseItem.primaryProcedure}
+                        </div>
                       </div>
 
-                      <div style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        opacity: 0.85,
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        marginTop: 2
-                      }}>
-                        {caseItem.primaryProcedure}
-                      </div>
-                    </div>
+                      {/* Hatched Red Turnover Warning Strip between cases */}
+                      {turnoverWarning && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: turnoverConflictLeft,
+                            width: Math.max(20, turnoverConflictWidth),
+                            height: 24,
+                            background: 'repeating-linear-gradient(45deg, rgba(220, 38, 38, 0.4), rgba(220, 38, 38, 0.4) 6px, rgba(220, 38, 38, 0.8) 6px, rgba(220, 38, 38, 0.8) 12px)',
+                            border: '1px solid var(--alert-red)',
+                            borderRadius: 3,
+                            zIndex: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'help'
+                          }}
+                          title={turnoverWarning}
+                        >
+                          <AlertTriangle size={12} color="#ffffff" />
+                        </div>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </div>

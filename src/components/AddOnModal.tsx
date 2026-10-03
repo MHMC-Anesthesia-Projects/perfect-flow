@@ -2,20 +2,25 @@
 
 import React, { useState } from 'react';
 import { EpicPatientCase, OperatingRoom } from '@/types/flow';
-import { X, Plus, AlertCircle } from 'lucide-react';
+import { validateRoomTurnover } from '@/lib/turnoverValidation';
+import { X, Plus, AlertTriangle } from 'lucide-react';
 
 interface AddOnModalProps {
   isOpen: boolean;
   onClose: () => void;
   rooms: OperatingRoom[];
+  allPatients: EpicPatientCase[];
   onAddPatient: (newPatient: EpicPatientCase) => void;
+  minTurnoverMinutes?: number;
 }
 
 export const AddOnModal: React.FC<AddOnModalProps> = ({
   isOpen,
   onClose,
   rooms,
-  onAddPatient
+  allPatients,
+  onAddPatient,
+  minTurnoverMinutes = 15
 }) => {
   if (!isOpen) return null;
 
@@ -29,9 +34,31 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
   const [preOpBay, setPreOpBay] = useState('Bay 06');
   const [casePriority, setCasePriority] = useState<'urgent' | 'emergent'>('urgent');
 
+  // Times
+  const [schedInRoom, setSchedInRoom] = useState('13:30');
+  const [schedOutRoom, setSchedOutRoom] = useState('15:00');
+
+  // Turnover error
+  const [turnoverError, setTurnoverError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientName || !primaryProcedure) return;
+
+    // Validate 15-minute room turnover conflict rule
+    const validation = validateRoomTurnover(
+      roomNumber,
+      schedInRoom,
+      schedOutRoom,
+      null, // new patient
+      allPatients,
+      minTurnoverMinutes
+    );
+
+    if (validation.hasConflict) {
+      setTurnoverError(validation.message || 'Turnover buffer too tight!');
+      return;
+    }
 
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     const randomId = `pt-${Math.floor(1000000 + Math.random() * 9000000)}`;
@@ -70,8 +97,13 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
       anesthesiologist: 'Alaniz, P',
       currentPhase: 'preop',
       scheduledArrival: timeNow,
-      scheduledStartTime: timeNow,
-      scheduledEndTime: '16:00',
+
+      schedInRoom,
+      schedCut: schedInRoom,
+      schedOutRoom,
+      scheduledStartTime: schedInRoom,
+      scheduledEndTime: schedOutRoom,
+
       preOpBay,
       preOpReady: false,
       surgeonSeen: false,
@@ -109,7 +141,7 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
       <div
         className="modal-container"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 560, padding: 20 }}
+        style={{ maxWidth: 580, padding: 20 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -134,6 +166,26 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
             <X size={20} />
           </button>
         </div>
+
+        {/* TURNOVER ERROR ALERT */}
+        {turnoverError && (
+          <div style={{
+            background: 'var(--alert-red-light)',
+            border: '1px solid var(--alert-red)',
+            color: 'var(--alert-red)',
+            padding: '10px 14px',
+            borderRadius: 6,
+            marginBottom: 14,
+            fontSize: 12,
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 8
+          }}>
+            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={{ flex: 1 }}>{turnoverError}</div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 10 }}>
@@ -184,12 +236,15 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Target Operating Room</label>
               <select
                 value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
+                onChange={(e) => {
+                  setRoomNumber(e.target.value);
+                  setTurnoverError(null);
+                }}
                 style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 13 }}
               >
                 {rooms.map(r => (
@@ -199,12 +254,28 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Pre-Op Bay Assignment</label>
+              <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Sched In-Room</label>
               <input
-                type="text"
-                value={preOpBay}
-                onChange={(e) => setPreOpBay(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 13 }}
+                type="time"
+                value={schedInRoom}
+                onChange={(e) => {
+                  setSchedInRoom(e.target.value);
+                  setTurnoverError(null);
+                }}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Sched Out-Room</label>
+              <input
+                type="time"
+                value={schedOutRoom}
+                onChange={(e) => {
+                  setSchedOutRoom(e.target.value);
+                  setTurnoverError(null);
+                }}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
               />
             </div>
           </div>
@@ -235,15 +306,13 @@ export const AddOnModal: React.FC<AddOnModalProps> = ({
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Case Priority</label>
-              <select
-                value={casePriority}
-                onChange={(e) => setCasePriority(e.target.value as any)}
+              <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 4 }}>Pre-Op Bay</label>
+              <input
+                type="text"
+                value={preOpBay}
+                onChange={(e) => setPreOpBay(e.target.value)}
                 style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 13 }}
-              >
-                <option value="urgent">Urgent</option>
-                <option value="emergent">Emergent (Stat)</option>
-              </select>
+              />
             </div>
           </div>
 

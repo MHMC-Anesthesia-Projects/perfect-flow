@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
+import { parseTimeToMinutes } from '@/lib/turnoverValidation';
 import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope } from 'lucide-react';
 
 interface RoomGridViewProps {
@@ -11,6 +12,7 @@ interface RoomGridViewProps {
   onSelectPatient: (patient: EpicPatientCase) => void;
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
+  minTurnoverMinutes?: number;
 }
 
 export const RoomGridView: React.FC<RoomGridViewProps> = ({
@@ -19,9 +21,9 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
   runners,
   onSelectPatient,
   onUpdatePatient,
-  hipaaProtected
+  hipaaProtected,
+  minTurnoverMinutes = 15
 }) => {
-  // Calculate elapsed time from HH:MM string to current time
   const getElapsedMinutes = (startTimeStr?: string) => {
     if (!startTimeStr) return null;
     const [h, m] = startTimeStr.split(':').map(Number);
@@ -131,16 +133,12 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
         gap: 14
       }}>
         {rooms.map((room) => {
-          // Get patients assigned to this room
           const roomPatients = patients.filter(p => p.roomNumber === room.name);
-          
-          // Identify currently active case (in_surgery or closing)
           const activeCase = roomPatients.find(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing');
-          
-          // Identify queued cases (scheduled or in pre-op)
           const queuedCases = roomPatients.filter(p => p.id !== activeCase?.id && p.currentPhase !== 'completed' && p.currentPhase !== 'pacu' && p.currentPhase !== 'phase2');
 
           const elapsedMins = activeCase ? getElapsedMinutes(activeCase.surgeryStartTime || activeCase.inRoomTime) : null;
+          const activeEndMins = activeCase ? parseTimeToMinutes(activeCase.outRoomTime || activeCase.schedOutRoom || activeCase.scheduledEndTime) : null;
 
           return (
             <div
@@ -404,81 +402,106 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                     UPCOMING CASES ({queuedCases.length})
                   </div>
 
-                  {queuedCases.map((queued) => (
-                    <div
-                      key={queued.id}
-                      onClick={() => onSelectPatient(queued)}
-                      style={{
-                        background: 'var(--surface-card)',
-                        border: '1px solid var(--border-light)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '8px 10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 4,
-                        transition: 'border-color var(--transition-fast)'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent-primary)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-light)')}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {queuedCases.map((queued) => {
+                    const queuedStartMins = parseTimeToMinutes(queued.inRoomTime || queued.schedInRoom || queued.scheduledStartTime);
+                    const turnoverBuffer = (activeEndMins !== null && queuedStartMins !== null) ? queuedStartMins - activeEndMins : null;
+                    const isTurnoverTight = turnoverBuffer !== null && turnoverBuffer < minTurnoverMinutes;
+
+                    return (
+                      <div
+                        key={queued.id}
+                        onClick={() => onSelectPatient(queued)}
+                        style={{
+                          background: 'var(--surface-card)',
+                          border: isTurnoverTight ? '1px solid var(--alert-red)' : '1px solid var(--border-light)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '8px 10px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 4,
+                          transition: 'border-color var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent-primary)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = isTurnoverTight ? 'var(--alert-red)' : 'var(--border-light)')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <span style={{
+                              padding: '1px 5px',
+                              borderRadius: 3,
+                              background: 'var(--surface-subtle)',
+                              border: '1px solid var(--border-medium)',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              fontFamily: 'var(--font-mono)'
+                            }}>
+                              #{queued.caseOrder}
+                            </span>
+                            <span style={{ fontWeight: 700 }}>{queued.surgeon}</span>
+                          </div>
+
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
+                            {queued.schedInRoom || queued.scheduledStartTime}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {hipaaProtected ? queued.patientInitials : queued.patientName}
+                          </span>
+
+                          {queued.preOpBay && (
+                            <span style={{ color: 'var(--phase-preop-bg)', fontWeight: 700 }}>
+                              {queued.preOpBay}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Tight Turnover Warning Alert */}
+                        {isTurnoverTight && (
+                          <div style={{
+                            background: 'var(--alert-red-light)',
+                            color: 'var(--alert-red)',
+                            border: '1px solid var(--alert-red-border)',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}>
+                            <AlertTriangle size={11} />
+                            <span>Tight Turnover: {turnoverBuffer}m buffer (&lt;{minTurnoverMinutes}m required)</span>
+                          </div>
+                        )}
+
+                        {/* Readiness gatekeeper dots */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, fontSize: 10 }}>
                           <span style={{
                             padding: '1px 5px',
                             borderRadius: 3,
-                            background: 'var(--surface-subtle)',
-                            border: '1px solid var(--border-medium)',
-                            fontSize: 10,
-                            fontWeight: 800,
-                            fontFamily: 'var(--font-mono)'
+                            background: queued.siteMarked === 'yes' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+                            color: queued.siteMarked === 'yes' ? 'var(--phase-surgery-bg)' : 'var(--alert-red)',
+                            fontWeight: 800
                           }}>
-                            #{queued.caseOrder}
+                            {queued.siteMarked === 'yes' ? 'Site Marked' : 'Site Pending'}
                           </span>
-                          <span style={{ fontWeight: 700 }}>{queued.surgeon}</span>
+
+                          <span style={{
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                            background: queued.anesthesiaReady ? 'rgba(2, 132, 199, 0.15)' : 'var(--surface-subtle)',
+                            color: queued.anesthesiaReady ? 'var(--accent-primary)' : 'var(--text-muted)',
+                            fontWeight: 700
+                          }}>
+                            {queued.anesthesiaReady ? 'Anes Ready' : 'Anes Pending'}
+                          </span>
                         </div>
-
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
-                          {queued.scheduledStartTime}
-                        </span>
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {hipaaProtected ? queued.patientInitials : queued.patientName}
-                        </span>
-
-                        {queued.preOpBay && (
-                          <span style={{ color: 'var(--phase-preop-bg)', fontWeight: 700 }}>
-                            {queued.preOpBay}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Readiness gatekeeper dots */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, fontSize: 10 }}>
-                        <span style={{
-                          padding: '1px 5px',
-                          borderRadius: 3,
-                          background: queued.siteMarked === 'yes' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
-                          color: queued.siteMarked === 'yes' ? 'var(--phase-surgery-bg)' : 'var(--alert-red)',
-                          fontWeight: 800
-                        }}>
-                          {queued.siteMarked === 'yes' ? 'Site Marked' : 'Site Pending'}
-                        </span>
-
-                        <span style={{
-                          padding: '1px 5px',
-                          borderRadius: 3,
-                          background: queued.anesthesiaReady ? 'rgba(2, 132, 199, 0.15)' : 'var(--surface-subtle)',
-                          color: queued.anesthesiaReady ? 'var(--accent-primary)' : 'var(--text-muted)',
-                          fontWeight: 700
-                        }}>
-                          {queued.anesthesiaReady ? 'Anes Ready' : 'Anes Pending'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
