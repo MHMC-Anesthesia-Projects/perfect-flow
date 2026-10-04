@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
-import { Plus, LayoutGrid, Layers, Activity, Filter, Clock } from 'lucide-react';
+import { Plus, LayoutGrid, Layers, Activity, Filter, Clock, CalendarRange } from 'lucide-react';
 
 interface OrStackedViewProps {
   rooms: OperatingRoom[];
@@ -13,7 +13,8 @@ interface OrStackedViewProps {
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
   minTurnoverMinutes?: number;
-  onSwitchToGrid: () => void;
+  orSubView?: 'grid' | 'stacked' | 'timeline';
+  onSelectOrSubView?: (view: 'grid' | 'stacked' | 'timeline') => void;
 }
 
 export const OrStackedView: React.FC<OrStackedViewProps> = ({
@@ -24,7 +25,8 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
   onUpdatePatient,
   hipaaProtected,
   minTurnoverMinutes = 15,
-  onSwitchToGrid
+  orSubView = 'stacked',
+  onSelectOrSubView
 }) => {
   const [selectedDept, setSelectedDept] = useState<'Day Surgery' | 'Main OR' | 'all'>('Day Surgery');
 
@@ -185,19 +187,20 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
             }}>
               <button
                 type="button"
-                onClick={onSwitchToGrid}
+                onClick={() => onSelectOrSubView && onSelectOrSubView('grid')}
                 style={{
                   padding: '5px 10px',
                   borderRadius: 4,
                   border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
+                  background: orSubView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+                  color: orSubView === 'grid' ? '#ffffff' : 'var(--text-secondary)',
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6
+                  gap: 6,
+                  boxShadow: orSubView === 'grid' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
                 }}
               >
                 <LayoutGrid size={13} />
@@ -206,23 +209,46 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
 
               <button
                 type="button"
+                onClick={() => onSelectOrSubView && onSelectOrSubView('stacked')}
                 style={{
                   padding: '5px 10px',
                   borderRadius: 4,
                   border: 'none',
-                  background: 'var(--accent-primary)',
-                  color: '#ffffff',
+                  background: orSubView === 'stacked' ? 'var(--accent-primary)' : 'transparent',
+                  color: orSubView === 'stacked' ? '#ffffff' : 'var(--text-secondary)',
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)'
+                  boxShadow: orSubView === 'stacked' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
                 }}
               >
                 <Layers size={13} />
                 <span>Consolidated Stacked</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSelectOrSubView && onSelectOrSubView('timeline')}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: orSubView === 'timeline' ? 'var(--accent-primary)' : 'transparent',
+                  color: orSubView === 'timeline' ? '#ffffff' : 'var(--text-secondary)',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: orSubView === 'timeline' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+                }}
+              >
+                <CalendarRange size={13} />
+                <span>Gantt Timeline</span>
               </button>
             </div>
           </div>

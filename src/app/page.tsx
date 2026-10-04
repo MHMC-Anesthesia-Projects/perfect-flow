@@ -22,8 +22,8 @@ export default function PerfectFlowApp() {
   const [theme, setTheme] = useState<'whiteboard' | 'dark'>('dark');
   const [flowState, setFlowState] = useState<FlowState>(getInitialFlowState());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-
-  const [currentView, setCurrentView] = useState<'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu'>('grid');
+  const [mainCategory, setMainCategory] = useState<'preop' | 'or' | 'recovery'>('or');
+  const [orSubView, setOrSubView] = useState<'grid' | 'stacked' | 'timeline'>('grid');
   const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]);
 
   const [hipaaProtected, setHipaaProtected] = useState<boolean>(false);
@@ -306,12 +306,32 @@ export default function PerfectFlowApp() {
 
   const minTurnoverMinutes = flowState.emrConfig?.minTurnoverBufferMinutes || 15;
 
+  const patientCounts = useMemo(() => {
+    return {
+      preop: flowState.patients.filter(p => p.currentPhase === 'preop' || p.currentPhase === 'scheduled' || p.currentPhase === 'arrived').length,
+      or: flowState.patients.filter(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing').length,
+      recovery: flowState.patients.filter(p => p.currentPhase === 'pacu' || p.currentPhase === 'phase2').length
+    };
+  }, [flowState.patients]);
+
+  const handleSelectPhaseFilter = (filter: PerioperativePhase | 'add_on' | null) => {
+    setSelectedPhaseFilter(filter);
+    if (filter === 'preop' || filter === 'scheduled') {
+      setMainCategory('preop');
+    } else if (filter === 'in_surgery' || filter === 'closing') {
+      setMainCategory('or');
+    } else if (filter === 'pacu' || filter === 'phase2') {
+      setMainCategory('recovery');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Top Application Header */}
+      {/* Top Application Header: Pre-Op, OR, Recovery */}
       <HeaderNav
-        currentView={currentView}
-        onSelectView={setCurrentView}
+        currentCategory={mainCategory}
+        onSelectCategory={setMainCategory}
+        patientCounts={patientCounts}
         currentUser={currentUser}
         onOpenLogin={() => setIsPinModalOpen(true)}
         theme={theme}
@@ -328,45 +348,10 @@ export default function PerfectFlowApp() {
         onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
-      {/* Main View Display */}
+      {/* Main Location Content Display */}
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {currentView === 'grid' && (
-          <RoomGridView
-            rooms={flowState.rooms}
-            patients={filteredPatients}
-            runners={flowState.runners}
-            onSelectPatient={(p) => setSelectedPatientId(p.id)}
-            onUpdatePatient={handleUpdatePatient}
-            hipaaProtected={hipaaProtected}
-            minTurnoverMinutes={minTurnoverMinutes}
-            onSwitchToStacked={() => setCurrentView('stacked')}
-          />
-        )}
-
-        {currentView === 'stacked' && (
-          <OrStackedView
-            rooms={flowState.rooms}
-            patients={filteredPatients}
-            runners={flowState.runners}
-            onSelectPatient={(p) => setSelectedPatientId(p.id)}
-            onUpdatePatient={handleUpdatePatient}
-            hipaaProtected={hipaaProtected}
-            minTurnoverMinutes={minTurnoverMinutes}
-            onSwitchToGrid={() => setCurrentView('grid')}
-          />
-        )}
-
-        {currentView === 'timeline' && (
-          <TimelineGanttView
-            rooms={flowState.rooms}
-            patients={filteredPatients}
-            onSelectPatient={(p) => setSelectedPatientId(p.id)}
-            hipaaProtected={hipaaProtected}
-            minTurnoverMinutes={minTurnoverMinutes}
-          />
-        )}
-
-        {currentView === 'preop' && (
+        {/* 1. PRE-OP LOCATION */}
+        {mainCategory === 'preop' && (
           <PreOpHoldingView
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
@@ -375,7 +360,51 @@ export default function PerfectFlowApp() {
           />
         )}
 
-        {currentView === 'pacu' && (
+        {/* 2. OR LOCATION: SUITE GRID */}
+        {mainCategory === 'or' && orSubView === 'grid' && (
+          <RoomGridView
+            rooms={flowState.rooms}
+            patients={filteredPatients}
+            runners={flowState.runners}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            onUpdatePatient={handleUpdatePatient}
+            hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
+            orSubView={orSubView}
+            onSelectOrSubView={setOrSubView}
+          />
+        )}
+
+        {/* 2. OR LOCATION: CONSOLIDATED STACKED */}
+        {mainCategory === 'or' && orSubView === 'stacked' && (
+          <OrStackedView
+            rooms={flowState.rooms}
+            patients={filteredPatients}
+            runners={flowState.runners}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            onUpdatePatient={handleUpdatePatient}
+            hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
+            orSubView={orSubView}
+            onSelectOrSubView={setOrSubView}
+          />
+        )}
+
+        {/* 2. OR LOCATION: GANTT TIMELINE */}
+        {mainCategory === 'or' && orSubView === 'timeline' && (
+          <TimelineGanttView
+            rooms={flowState.rooms}
+            patients={filteredPatients}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
+            orSubView={orSubView}
+            onSelectOrSubView={setOrSubView}
+          />
+        )}
+
+        {/* 3. RECOVERY LOCATION */}
+        {mainCategory === 'recovery' && (
           <PacuRecoveryView
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
@@ -389,7 +418,7 @@ export default function PerfectFlowApp() {
       <BottomRibbon
         patients={flowState.patients}
         selectedPhaseFilter={selectedPhaseFilter}
-        onSelectPhaseFilter={setSelectedPhaseFilter}
+        onSelectPhaseFilter={handleSelectPhaseFilter}
         onOpenAudit={() => setIsAuditOpen(true)}
         auditCount={flowState.auditLogs.length}
       />

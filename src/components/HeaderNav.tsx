@@ -10,8 +10,13 @@ import {
 } from 'lucide-react';
 
 interface HeaderNavProps {
-  currentView: 'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu';
-  onSelectView: (view: 'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu') => void;
+  currentCategory: 'preop' | 'or' | 'recovery';
+  onSelectCategory: (category: 'preop' | 'or' | 'recovery') => void;
+  patientCounts: {
+    preop: number;
+    or: number;
+    recovery: number;
+  };
   currentUser: User;
   onOpenLogin: () => void;
   theme: 'whiteboard' | 'dark';
@@ -29,8 +34,9 @@ interface HeaderNavProps {
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
-  currentView,
-  onSelectView,
+  currentCategory,
+  onSelectCategory,
+  patientCounts,
   currentUser,
   onOpenLogin,
   theme,
@@ -145,51 +151,72 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         </div>
       </div>
 
-      {/* Main View Switcher Navigation */}
-      <nav className="view-tabs" aria-label="Main View Navigation">
+      {/* Main Category Views Navigation: Pre-Op, OR, Recovery */}
+      <nav className="view-tabs" aria-label="Main Perioperative Location Navigation">
         <button
           type="button"
-          className={`view-tab-btn ${currentView === 'grid' ? 'active' : ''}`}
-          onClick={() => onSelectView('grid')}
-        >
-          <LayoutGrid size={16} />
-          <span>OR Grid</span>
-        </button>
-
-        <button
-          type="button"
-          className={`view-tab-btn ${currentView === 'stacked' ? 'active' : ''}`}
-          onClick={() => onSelectView('stacked')}
-        >
-          <Layers size={16} />
-          <span>OR Stacked</span>
-        </button>
-
-        <button
-          type="button"
-          className={`view-tab-btn ${currentView === 'timeline' ? 'active' : ''}`}
-          onClick={() => onSelectView('timeline')}
-        >
-          <CalendarRange size={16} />
-          <span>Gantt Timeline</span>
-        </button>
-
-        <button
-          type="button"
-          className={`view-tab-btn ${currentView === 'preop' ? 'active' : ''}`}
-          onClick={() => onSelectView('preop')}
+          className={`view-tab-btn ${currentCategory === 'preop' ? 'active' : ''}`}
+          onClick={() => onSelectCategory('preop')}
         >
           <Stethoscope size={16} />
-          <span>Pre-Op Holding</span>
+          <span>Pre-Op</span>
+          {patientCounts.preop > 0 && (
+            <span style={{
+              background: currentCategory === 'preop' ? '#ffffff' : 'var(--phase-preop-bg)',
+              color: currentCategory === 'preop' ? 'var(--phase-preop-bg)' : '#ffffff',
+              fontSize: 11,
+              fontWeight: 900,
+              padding: '1px 6px',
+              borderRadius: 10,
+              fontFamily: 'var(--font-mono)'
+            }}>
+              {patientCounts.preop}
+            </span>
+          )}
         </button>
 
         <button
           type="button"
-          className={`view-tab-btn ${currentView === 'pacu' ? 'active' : ''}`}
-          onClick={() => onSelectView('pacu')}
+          className={`view-tab-btn ${currentCategory === 'or' ? 'active' : ''}`}
+          onClick={() => onSelectCategory('or')}
+        >
+          <LayoutGrid size={16} />
+          <span>OR</span>
+          {patientCounts.or > 0 && (
+            <span style={{
+              background: currentCategory === 'or' ? '#ffffff' : 'var(--phase-surgery-bg)',
+              color: currentCategory === 'or' ? 'var(--phase-surgery-bg)' : '#ffffff',
+              fontSize: 11,
+              fontWeight: 900,
+              padding: '1px 6px',
+              borderRadius: 10,
+              fontFamily: 'var(--font-mono)'
+            }}>
+              {patientCounts.or}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          className={`view-tab-btn ${currentCategory === 'recovery' ? 'active' : ''}`}
+          onClick={() => onSelectCategory('recovery')}
         >
           <BedDouble size={16} />
-          <span>PACU & Phase II</span>
+          <span>Recovery</span>
+          {patientCounts.recovery > 0 && (
+            <span style={{
+              background: currentCategory === 'recovery' ? '#ffffff' : 'var(--phase-pacu-bg)',
+              color: currentCategory === 'recovery' ? 'var(--phase-pacu-bg)' : '#ffffff',
+              fontSize: 11,
+              fontWeight: 900,
+              padding: '1px 6px',
+              borderRadius: 10,
+              fontFamily: 'var(--font-mono)'
+            }}>
+              {patientCounts.recovery}
+            </span>
+          )}
         </button>
       </nav>
 

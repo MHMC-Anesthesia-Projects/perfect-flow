@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { EpicPatientCase, OperatingRoom } from '@/types/flow';
-import { Clock, Plus, AlertTriangle } from 'lucide-react';
+import { Clock, Plus, AlertTriangle, LayoutGrid, Layers, CalendarRange } from 'lucide-react';
 
 interface TimelineGanttViewProps {
   rooms: OperatingRoom[];
@@ -10,6 +10,8 @@ interface TimelineGanttViewProps {
   onSelectPatient: (patient: EpicPatientCase) => void;
   hipaaProtected: boolean;
   minTurnoverMinutes?: number;
+  orSubView?: 'grid' | 'stacked' | 'timeline';
+  onSelectOrSubView?: (view: 'grid' | 'stacked' | 'timeline') => void;
 }
 
 export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
@@ -17,7 +19,9 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   patients,
   onSelectPatient,
   hipaaProtected,
-  minTurnoverMinutes = 15
+  minTurnoverMinutes = 15,
+  orSubView = 'timeline',
+  onSelectOrSubView
 }) => {
   const START_HOUR = 7;
   const END_HOUR = 19;
@@ -59,6 +63,96 @@ export const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
       background: 'var(--bg-app)',
       overflow: 'hidden'
     }}>
+      {/* View Switcher Header Bar */}
+      <div style={{
+        padding: '8px 16px',
+        background: 'var(--surface-header)',
+        borderBottom: '1px solid var(--border-medium)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0
+      }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          OPERATING SUITES COMMAND VIEW • GANTT TIMELINE
+        </div>
+
+        <div style={{
+          display: 'flex',
+          background: 'var(--surface-subtle)',
+          border: '1px solid var(--border-medium)',
+          borderRadius: 'var(--radius-sm)',
+          padding: 3,
+          gap: 4
+        }}>
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('grid')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'grid' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'grid' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <LayoutGrid size={13} />
+            <span>Suite Grid</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('stacked')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'stacked' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'stacked' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'stacked' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <Layers size={13} />
+            <span>Consolidated Stacked</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('timeline')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'timeline' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'timeline' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'timeline' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <CalendarRange size={13} />
+            <span>Gantt Timeline</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Ruler Header (Sticky) */}
       <div style={{
         display: 'flex',

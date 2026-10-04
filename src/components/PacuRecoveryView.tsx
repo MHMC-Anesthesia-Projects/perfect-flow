@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { EpicPatientCase } from '@/types/flow';
 import { BedDouble, Check, AlertCircle, Clock, CheckCircle2, UserCheck, ArrowRight, ShieldCheck } from 'lucide-react';
 
@@ -17,8 +17,18 @@ export const PacuRecoveryView: React.FC<PacuRecoveryViewProps> = ({
   onUpdatePatient,
   hipaaProtected
 }) => {
+  const [subView, setSubView] = useState<'all' | 'pacu' | 'phase2'>('all');
+
   // Patients in PACU or Phase II
-  const recoveryPatients = patients.filter(p => p.currentPhase === 'pacu' || p.currentPhase === 'phase2');
+  const allRecovery = patients.filter(p => p.currentPhase === 'pacu' || p.currentPhase === 'phase2');
+  const pacuCount = allRecovery.filter(p => p.currentPhase === 'pacu').length;
+  const phase2Count = allRecovery.filter(p => p.currentPhase === 'phase2').length;
+
+  const recoveryPatients = subView === 'all' 
+    ? allRecovery 
+    : subView === 'pacu' 
+      ? allRecovery.filter(p => p.currentPhase === 'pacu')
+      : allRecovery.filter(p => p.currentPhase === 'phase2');
 
   const formatTimeNow = () => {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -83,30 +93,77 @@ export const PacuRecoveryView: React.FC<PacuRecoveryViewProps> = ({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{
-            padding: '6px 14px',
-            background: 'rgba(2, 132, 199, 0.15)',
-            border: '1px solid var(--phase-pacu-bg)',
-            color: 'var(--phase-pacu-bg)',
-            borderRadius: 6,
-            fontSize: 12,
-            fontWeight: 800
-          }}>
-            PACU Phase I: {recoveryPatients.filter(p => p.currentPhase === 'pacu').length}
-          </div>
+        {/* Sub-view Segmented Toggle: All Recovery | PACU Phase I | Phase II Stepdown */}
+        <div style={{
+          display: 'flex',
+          background: 'var(--surface-subtle)',
+          border: '1px solid var(--border-medium)',
+          borderRadius: 'var(--radius-sm)',
+          padding: 3,
+          gap: 4
+        }}>
+          <button
+            type="button"
+            onClick={() => setSubView('all')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 4,
+              border: 'none',
+              background: subView === 'all' ? 'var(--accent-primary)' : 'transparent',
+              color: subView === 'all' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: subView === 'all' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <span>All Recovery ({allRecovery.length})</span>
+          </button>
 
-          <div style={{
-            padding: '6px 14px',
-            background: 'rgba(13, 148, 136, 0.15)',
-            border: '1px solid var(--phase-phase2-bg)',
-            color: 'var(--phase-phase2-bg)',
-            borderRadius: 6,
-            fontSize: 12,
-            fontWeight: 800
-          }}>
-            Phase II Discharge: {recoveryPatients.filter(p => p.currentPhase === 'phase2').length}
-          </div>
+          <button
+            type="button"
+            onClick={() => setSubView('pacu')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 4,
+              border: 'none',
+              background: subView === 'pacu' ? 'var(--phase-pacu-bg)' : 'transparent',
+              color: subView === 'pacu' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: subView === 'pacu' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <span>PACU Phase I ({pacuCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSubView('phase2')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 4,
+              border: 'none',
+              background: subView === 'phase2' ? 'var(--phase-phase2-bg)' : 'transparent',
+              color: subView === 'phase2' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: subView === 'phase2' ? '0 2px 4px rgba(13, 148, 136, 0.3)' : 'none'
+            }}
+          >
+            <span>Phase II Discharge ({phase2Count})</span>
+          </button>
         </div>
       </div>
 

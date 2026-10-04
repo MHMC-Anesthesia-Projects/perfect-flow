@@ -3,7 +3,7 @@
 import React from 'react';
 import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
-import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope, LayoutGrid, Layers } from 'lucide-react';
+import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope, LayoutGrid, Layers, CalendarRange } from 'lucide-react';
 
 interface RoomGridViewProps {
   rooms: OperatingRoom[];
@@ -13,7 +13,8 @@ interface RoomGridViewProps {
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
   minTurnoverMinutes?: number;
-  onSwitchToStacked?: () => void;
+  orSubView?: 'grid' | 'stacked' | 'timeline';
+  onSelectOrSubView?: (view: 'grid' | 'stacked' | 'timeline') => void;
 }
 
 export const RoomGridView: React.FC<RoomGridViewProps> = ({
@@ -24,7 +25,8 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
   onUpdatePatient,
   hipaaProtected,
   minTurnoverMinutes = 15,
-  onSwitchToStacked
+  orSubView = 'grid',
+  onSelectOrSubView
 }) => {
   const getElapsedMinutes = (startTimeStr?: string) => {
     if (!startTimeStr) return null;
@@ -151,47 +153,69 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
           }}>
             <button
               type="button"
+              onClick={() => onSelectOrSubView && onSelectOrSubView('grid')}
               style={{
                 padding: '4px 10px',
                 borderRadius: 4,
                 border: 'none',
-                background: 'var(--accent-primary)',
-                color: '#ffffff',
+                background: orSubView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+                color: orSubView === 'grid' ? '#ffffff' : 'var(--text-secondary)',
                 fontSize: 12,
                 fontWeight: 800,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)'
+                boxShadow: orSubView === 'grid' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
               }}
             >
               <LayoutGrid size={13} />
-              <span>Active Suite Grid</span>
+              <span>Suite Grid</span>
             </button>
 
-            {onSwitchToStacked && (
-              <button
-                type="button"
-                onClick={onSwitchToStacked}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}
-              >
-                <Layers size={13} />
-                <span>Consolidated Stacked</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onSelectOrSubView && onSelectOrSubView('stacked')}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 4,
+                border: 'none',
+                background: orSubView === 'stacked' ? 'var(--accent-primary)' : 'transparent',
+                color: orSubView === 'stacked' ? '#ffffff' : 'var(--text-secondary)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: orSubView === 'stacked' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+              }}
+            >
+              <Layers size={13} />
+              <span>Consolidated Stacked</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSelectOrSubView && onSelectOrSubView('timeline')}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 4,
+                border: 'none',
+                background: orSubView === 'timeline' ? 'var(--accent-primary)' : 'transparent',
+                color: orSubView === 'timeline' ? '#ffffff' : 'var(--text-secondary)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: orSubView === 'timeline' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+              }}
+            >
+              <CalendarRange size={13} />
+              <span>Gantt Timeline</span>
+            </button>
           </div>
         </div>
 
