@@ -5,13 +5,13 @@ import { User, UserRole } from '@/types/flow';
 import { 
   Sun, Moon, Shield, Lock, Clock, Search, 
   RotateCw, Eye, EyeOff, Keyboard, Maximize, 
-  Minimize, LayoutGrid, CalendarRange, 
+  Minimize, LayoutGrid, Layers, CalendarRange, 
   Stethoscope, BedDouble, PlusCircle, Settings, ShieldCheck 
 } from 'lucide-react';
 
 interface HeaderNavProps {
-  currentView: 'grid' | 'timeline' | 'preop' | 'pacu';
-  onSelectView: (view: 'grid' | 'timeline' | 'preop' | 'pacu') => void;
+  currentView: 'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu';
+  onSelectView: (view: 'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu') => void;
   currentUser: User;
   onOpenLogin: () => void;
   theme: 'whiteboard' | 'dark';
@@ -154,6 +154,15 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         >
           <LayoutGrid size={16} />
           <span>OR Grid</span>
+        </button>
+
+        <button
+          type="button"
+          className={`view-tab-btn ${currentView === 'stacked' ? 'active' : ''}`}
+          onClick={() => onSelectView('stacked')}
+        >
+          <Layers size={16} />
+          <span>OR Stacked</span>
         </button>
 
         <button

@@ -173,13 +173,22 @@ export interface BoardRunner {
   role: 'anes' | 'rn' | 'wp' | 'late' | 'float';
 }
 
+export interface RoomStaffTeam {
+  anesthesiologist: string;
+  crna: string;
+  circulatorRN: string;
+  scrubTech: string;
+  anesTech?: string;
+}
+
 export interface OperatingRoom {
   id: string;
   name: string; // e.g. "MC OR 01", "MC OR 06", "MC ORT OR 06"
-  department: 'Main OR' | 'Ortho OR' | 'Endo' | 'Ambulatory';
+  department: 'Main OR' | 'Ortho OR' | 'Endo' | 'Ambulatory' | 'Day Surgery';
   displayOrder: number;
   status: 'in_case' | 'closing' | 'turnover' | 'idle' | 'hold';
   cleaningStatus?: 'clean' | 'cleaning' | 'dirty';
+  assignedStaff?: RoomStaffTeam;
 }
 
 export interface AuditLogEntry {

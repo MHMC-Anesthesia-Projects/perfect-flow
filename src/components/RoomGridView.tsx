@@ -3,7 +3,7 @@
 import React from 'react';
 import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
-import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope } from 'lucide-react';
+import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope, LayoutGrid, Layers } from 'lucide-react';
 
 interface RoomGridViewProps {
   rooms: OperatingRoom[];
@@ -13,6 +13,7 @@ interface RoomGridViewProps {
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
   minTurnoverMinutes?: number;
+  onSwitchToStacked?: () => void;
 }
 
 export const RoomGridView: React.FC<RoomGridViewProps> = ({
@@ -22,7 +23,8 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
   onSelectPatient,
   onUpdatePatient,
   hipaaProtected,
-  minTurnoverMinutes = 15
+  minTurnoverMinutes = 15,
+  onSwitchToStacked
 }) => {
   const getElapsedMinutes = (startTimeStr?: string) => {
     if (!startTimeStr) return null;
@@ -124,14 +126,83 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
         })}
       </aside>
 
-      {/* MAIN OPERATING ROOMS GRID */}
-      <main style={{
-        overflowX: 'auto',
-        overflowY: 'auto',
-        padding: '16px',
-        display: 'flex',
-        gap: 14
-      }}>
+      {/* MAIN OPERATING ROOMS SECTION */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        {/* View Switcher Header Bar */}
+        <div style={{
+          padding: '8px 16px',
+          background: 'var(--surface-header)',
+          borderBottom: '1px solid var(--border-medium)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            OPERATING SUITES COMMAND VIEW
+          </div>
+
+          <div style={{
+            display: 'flex',
+            background: 'var(--surface-subtle)',
+            border: '1px solid var(--border-medium)',
+            borderRadius: 'var(--radius-sm)',
+            padding: 3,
+            gap: 4
+          }}>
+            <button
+              type="button"
+              style={{
+                padding: '4px 10px',
+                borderRadius: 4,
+                border: 'none',
+                background: 'var(--accent-primary)',
+                color: '#ffffff',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)'
+              }}
+            >
+              <LayoutGrid size={13} />
+              <span>Active Suite Grid</span>
+            </button>
+
+            {onSwitchToStacked && (
+              <button
+                type="button"
+                onClick={onSwitchToStacked}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <Layers size={13} />
+                <span>Consolidated Stacked</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <main style={{
+          flex: 1,
+          overflowX: 'auto',
+          overflowY: 'auto',
+          padding: '16px',
+          display: 'flex',
+          gap: 14
+        }}>
         {rooms.map((room) => {
           const roomPatients = patients.filter(p => p.roomNumber === room.name);
           const activeCase = roomPatients.find(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing');
@@ -509,5 +580,6 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
         })}
       </main>
     </div>
-  );
+  </div>
+);
 };

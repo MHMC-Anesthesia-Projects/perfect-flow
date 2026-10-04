@@ -6,6 +6,7 @@ import { initialUsers, initialEmrConfig, getInitialFlowState } from '@/lib/mockD
 import { HeaderNav } from '@/components/HeaderNav';
 import { BottomRibbon } from '@/components/BottomRibbon';
 import { RoomGridView } from '@/components/RoomGridView';
+import { OrStackedView } from '@/components/OrStackedView';
 import { TimelineGanttView } from '@/components/TimelineGanttView';
 import { PreOpHoldingView } from '@/components/PreOpHoldingView';
 import { PacuRecoveryView } from '@/components/PacuRecoveryView';
@@ -17,11 +18,12 @@ import { AuditDrawer } from '@/components/AuditDrawer';
 import { TouchscreenKeyboard } from '@/components/TouchscreenKeyboard';
 
 export default function PerfectFlowApp() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/flow';
   const [theme, setTheme] = useState<'whiteboard' | 'dark'>('dark');
   const [flowState, setFlowState] = useState<FlowState>(getInitialFlowState());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-  const [currentView, setCurrentView] = useState<'grid' | 'timeline' | 'preop' | 'pacu'>('grid');
+  const [currentView, setCurrentView] = useState<'grid' | 'stacked' | 'timeline' | 'preop' | 'pacu'>('grid');
   const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]);
 
   const [hipaaProtected, setHipaaProtected] = useState<boolean>(false);
@@ -42,7 +44,7 @@ export default function PerfectFlowApp() {
     const fetchState = async () => {
       try {
         setIsSyncing(true);
-        const res = await fetch('/api/flow');
+        const res = await fetch(`${basePath}/api/flow`);
         if (res.ok) {
           const data = await res.json();
           if (data?.patients?.length > 0) {
@@ -73,7 +75,7 @@ export default function PerfectFlowApp() {
   const handleResetData = async () => {
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/flow', {
+      const res = await fetch(`${basePath}/api/flow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reset' })
@@ -118,7 +120,7 @@ export default function PerfectFlowApp() {
     });
 
     try {
-      await fetch('/api/flow', {
+      await fetch(`${basePath}/api/flow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -231,7 +233,7 @@ export default function PerfectFlowApp() {
     };
 
     try {
-      await fetch('/api/epic/sync', {
+      await fetch(`${basePath}/api/epic/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ epicCase: epicSimulatedCase })
@@ -337,6 +339,20 @@ export default function PerfectFlowApp() {
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
             minTurnoverMinutes={minTurnoverMinutes}
+            onSwitchToStacked={() => setCurrentView('stacked')}
+          />
+        )}
+
+        {currentView === 'stacked' && (
+          <OrStackedView
+            rooms={flowState.rooms}
+            patients={filteredPatients}
+            runners={flowState.runners}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            onUpdatePatient={handleUpdatePatient}
+            hipaaProtected={hipaaProtected}
+            minTurnoverMinutes={minTurnoverMinutes}
+            onSwitchToGrid={() => setCurrentView('grid')}
           />
         )}
 

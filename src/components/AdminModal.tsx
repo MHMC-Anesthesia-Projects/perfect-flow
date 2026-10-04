@@ -75,8 +75,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const handleTestConnection = async () => {
     setTestResult({ status: 'testing' });
     const startTime = performance.now();
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/flow';
     try {
-      const res = await fetch('/api/epic/sync', {
+      const res = await fetch(`${basePath}/api/epic/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ping: true })
