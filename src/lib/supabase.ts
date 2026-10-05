@@ -1,9 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Dedicated table and schema configuration
-// Defaults to 'public' schema with table 'flow_app_state' (zero-config in Supabase Dashboard)
-export const FLOW_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_FLOW_SCHEMA || 'public';
-export const FLOW_TABLE = process.env.NEXT_PUBLIC_SUPABASE_TABLE || process.env.SUPABASE_FLOW_TABLE || (FLOW_SCHEMA === 'public' ? 'flow_app_state' : 'app_state');
+// Dedicated schema and table configuration for Perfect Flow
+// Uses the dedicated 'flow' PostgreSQL schema to isolate all Flow data
+export const FLOW_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_FLOW_SCHEMA || 'flow';
+export const FLOW_TABLE = process.env.NEXT_PUBLIC_SUPABASE_TABLE || process.env.SUPABASE_FLOW_TABLE || 'app_state';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
