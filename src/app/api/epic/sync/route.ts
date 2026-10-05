@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const state = getFlowState();
+    const state = await getFlowState();
 
     // If an Epic incoming case payload is received:
     if (body.epicCase) {
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         details: `Case #${incomingCase.epicCaseId} synchronized with Epic OpTime`
       });
 
-      saveFlowState(state);
+      await saveFlowState(state);
       return NextResponse.json({ success: true, message: 'Epic case synced', state });
     }
 

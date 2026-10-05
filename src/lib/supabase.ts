@@ -1,7 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// The dedicated schema for Perfect Flow tables in PostgreSQL
-export const FLOW_SCHEMA = 'flow';
+// Dedicated table and schema configuration
+// Defaults to 'public' schema with table 'flow_app_state' (zero-config in Supabase Dashboard)
+export const FLOW_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_FLOW_SCHEMA || 'public';
+export const FLOW_TABLE = process.env.NEXT_PUBLIC_SUPABASE_TABLE || process.env.SUPABASE_FLOW_TABLE || (FLOW_SCHEMA === 'public' ? 'flow_app_state' : 'app_state');
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
@@ -19,9 +21,7 @@ export function getSupabaseServerClient(): SupabaseClient<any, any, any> | null 
   if (!serverClient) {
     const key = supabaseServiceKey || supabaseAnonKey;
     serverClient = createClient(supabaseUrl, key, {
-      db: {
-        schema: FLOW_SCHEMA,
-      },
+      ...(FLOW_SCHEMA !== 'public' ? { db: { schema: FLOW_SCHEMA } } : {}),
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -44,9 +44,7 @@ export function getBrowserSupabase(): SupabaseClient<any, any, any> | null {
 
   if (!browserClient) {
     browserClient = createClient(url, key, {
-      db: {
-        schema: FLOW_SCHEMA,
-      },
+      ...(FLOW_SCHEMA !== 'public' ? { db: { schema: FLOW_SCHEMA } } : {}),
       realtime: {
         params: {
           eventsPerSecond: 10,

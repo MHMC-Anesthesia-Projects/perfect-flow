@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-10-03T21:34:05.971Z",
+  "lastUpdated": "2026-10-04T23:46:51.424Z",
   "patients": [
     {
       "id": "pt-1015987",
@@ -869,6 +869,60 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1791157611424",
+      "timestamp": "06:46:51 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
+    {
+      "id": "log-1791157610666",
+      "timestamp": "06:46:50 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
+    {
+      "id": "log-1791157601770",
+      "timestamp": "06:46:41 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
+    {
+      "id": "log-1791157597881",
+      "timestamp": "06:46:37 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
+    {
+      "id": "log-1791157596290",
+      "timestamp": "06:46:36 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
+    {
+      "id": "log-1791157596213",
+      "timestamp": "06:46:36 PM",
+      "user": "Board Runner (Alaniz, P / Veronica N)",
+      "action": "PATIENT_UPDATED",
+      "patientId": "pt-1015891",
+      "patientName": "Brody, Marcus",
+      "details": "Updated case 1015891 (MC OR 02)"
+    },
     {
       "id": "log-1791063245971",
       "timestamp": "04:34:05 PM",

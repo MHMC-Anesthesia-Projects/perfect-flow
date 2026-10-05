@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { EpicPatientCase, FlowState, OperatingRoom, PerioperativePhase, User, EmrApiConfig } from '@/types/flow';
 import { initialUsers, initialEmrConfig, getInitialFlowState } from '@/lib/mockData';
+import { getBrowserSupabase, FLOW_TABLE, FLOW_SCHEMA } from '@/lib/supabase';
 import { HeaderNav } from '@/components/HeaderNav';
 import { BottomRibbon } from '@/components/BottomRibbon';
 import { RoomGridView } from '@/components/RoomGridView';
@@ -58,6 +59,37 @@ export default function PerfectFlowApp() {
       }
     };
     fetchState();
+  }, [basePath]);
+
+  // Supabase Realtime live sync across monitors and devices
+  useEffect(() => {
+    const supabase = getBrowserSupabase();
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('flow-realtime-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: FLOW_SCHEMA,
+          table: FLOW_TABLE
+        },
+        (payload: any) => {
+          if (payload.new && payload.new.state_data) {
+            setFlowState(payload.new.state_data as FlowState);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Supabase Realtime] Connected to live flow updates');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -155,14 +187,52 @@ export default function PerfectFlowApp() {
     }));
 
     setSelectedPatientId(newPatient.id);
+
+    try {
+      await fetch(`${basePath}/api/flow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'addPatient',
+          patient: newPatient,
+          actorName: currentUser.displayName
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync added patient:', err);
+    }
   };
 
-  const handleSaveUsers = (updatedUsers: User[]) => {
+  const handleSaveUsers = async (updatedUsers: User[]) => {
     setFlowState(prev => ({ ...prev, users: updatedUsers }));
+    try {
+      await fetch(`${basePath}/api/flow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveUsers',
+          users: updatedUsers
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync users:', err);
+    }
   };
 
-  const handleSaveEmrConfig = (updatedConfig: EmrApiConfig) => {
+  const handleSaveEmrConfig = async (updatedConfig: EmrApiConfig) => {
     setFlowState(prev => ({ ...prev, emrConfig: updatedConfig }));
+    try {
+      await fetch(`${basePath}/api/flow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveEmrConfig',
+          emrConfig: updatedConfig
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync EMR config:', err);
+    }
   };
 
   // Simulate an incoming emergency Add-On case directly from Epic OpTime HL7 interface

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getFlowState, updatePatientCase, updateRoomStatus, resetFlowState } from '@/lib/storage';
+import { getFlowState, saveFlowState, updatePatientCase, updateRoomStatus, resetFlowState, addPatientCase } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const state = getFlowState();
+    const state = await getFlowState();
     return NextResponse.json(state);
   } catch (error) {
     console.error('API /api/flow GET error:', error);
@@ -16,20 +16,39 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, patientId, updates, roomId, roomUpdates, actorName, note } = body;
+    const { action, patientId, updates, roomId, roomUpdates, actorName, note, patient, users, emrConfig } = body;
 
     if (action === 'reset') {
-      const state = resetFlowState();
+      const state = await resetFlowState();
+      return NextResponse.json({ success: true, state });
+    }
+
+    if (action === 'addPatient' && patient) {
+      const state = await addPatientCase(patient, actorName || 'Staff');
       return NextResponse.json({ success: true, state });
     }
 
     if (action === 'updatePatient' && patientId && updates) {
-      const state = updatePatientCase(patientId, updates, actorName || 'Staff', note);
+      const state = await updatePatientCase(patientId, updates, actorName || 'Staff', note);
       return NextResponse.json({ success: true, state });
     }
 
     if (action === 'updateRoom' && roomId && roomUpdates) {
-      const state = updateRoomStatus(roomId, roomUpdates);
+      const state = await updateRoomStatus(roomId, roomUpdates);
+      return NextResponse.json({ success: true, state });
+    }
+
+    if (action === 'saveUsers' && users) {
+      const state = await getFlowState();
+      state.users = users;
+      await saveFlowState(state);
+      return NextResponse.json({ success: true, state });
+    }
+
+    if (action === 'saveEmrConfig' && emrConfig) {
+      const state = await getFlowState();
+      state.emrConfig = emrConfig;
+      await saveFlowState(state);
       return NextResponse.json({ success: true, state });
     }
 
