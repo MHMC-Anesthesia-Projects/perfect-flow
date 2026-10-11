@@ -1,12 +1,68 @@
-import { EpicPatientCase, OperatingRoom, BoardRunner, User, FlowState, EmrApiConfig } from '@/types/flow';
+import { EpicPatientCase, OperatingRoom, BoardRunner, User, JourneyState, FlowState, EmrApiConfig, Department, StaffMember } from '@/types/journey';
+
+export const initialDepartments: Department[] = [
+  { id: 'dept-all', name: 'All Departments', code: 'ALL', description: 'System-wide health facility census', active: true, displayOrder: 0 },
+  { id: 'dept-main', name: 'Main OR', code: 'MAIN_OR', description: 'Inpatient surgical suites (Suites 01-08)', active: true, displayOrder: 1 },
+  { id: 'dept-ds', name: 'Day Surgery', code: 'DAY_SURG', description: 'Ambulatory surgery pavilion (Suites DS 01-05)', active: true, displayOrder: 2 },
+  { id: 'dept-ortho', name: 'Ortho OR', code: 'ORTHO', description: 'Specialized orthopedic & joint reconstruction suites', active: true, displayOrder: 3 },
+  { id: 'dept-endo', name: 'Endo', code: 'ENDO', description: 'Endoscopy & GI procedural suites', active: true, displayOrder: 4 },
+  { id: 'dept-cv', name: 'CV Heart & Vascular', code: 'CV', description: 'Cardiovascular suites & hybrid cath labs', active: true, displayOrder: 5 }
+];
+
+export const initialStaffRoster: StaffMember[] = [
+  // Anesthesiologists
+  { id: 'staff-1', staffName: 'Peter Alaniz, MD', displayName: 'Alaniz, P (MD)', role: 'Anesthesiologist', environmentHome: 'Main OR', cell: 'x5501 / (713) 555-0101', active: true },
+  { id: 'staff-2', staffName: 'Eric Jones, MD', displayName: 'Jones, E (MD)', role: 'Anesthesiologist', environmentHome: 'Day Surgery', cell: 'x5502 / (713) 555-0102', active: true },
+  { id: 'staff-3', staffName: 'Caroline Prichard, MD', displayName: 'Prichard, C (MD)', role: 'Anesthesiologist', environmentHome: 'Day Surgery', cell: 'x5503 / (713) 555-0103', active: true },
+  { id: 'staff-4', staffName: 'Francis Gelpi-Hammond, MD', displayName: 'Gelpi-Hammond, F (MD)', role: 'Anesthesiologist', environmentHome: 'Day Surgery', cell: 'x5504 / (713) 555-0104', active: true },
+  { id: 'staff-5', staffName: 'David Chen, MD', displayName: 'Chen, D (MD)', role: 'Anesthesiologist', environmentHome: 'Main OR', cell: 'x5505 / (713) 555-0105', active: true },
+  { id: 'staff-6', staffName: 'Ricardo Perez, MD', displayName: 'Perez, R (MD)', role: 'Anesthesiologist', environmentHome: 'Main OR', cell: 'x5506 / (713) 555-0106', active: true },
+  { id: 'staff-7', staffName: 'Sanjay Patel, MD', displayName: 'Patel, S (MD)', role: 'Anesthesiologist', environmentHome: 'Main OR', cell: 'x5507 / (713) 555-0107', active: true },
+
+  // CRNAs
+  { id: 'staff-10', staffName: 'Katie Taylor, CRNA', displayName: 'Taylor, K. (CRNA)', role: 'CRNA', environmentHome: 'Day Surgery', cell: 'x5511 / (713) 555-0111', active: true },
+  { id: 'staff-11', staffName: 'Erica Brown, CRNA', displayName: 'Erica B. (CRNA)', role: 'CRNA', environmentHome: 'Day Surgery', cell: 'x5512 / (713) 555-0112', active: true },
+  { id: 'staff-12', staffName: 'Marcus Jackson, CRNA', displayName: 'Marcus J. (CRNA)', role: 'CRNA', environmentHome: 'Day Surgery', cell: 'x5513 / (713) 555-0113', active: true },
+  { id: 'staff-13', staffName: 'Indy Bell, CRNA', displayName: 'Indy B. (CRNA)', role: 'CRNA', environmentHome: 'Main OR', cell: 'x5514 / (713) 555-0114', active: true },
+  { id: 'staff-14', staffName: 'Michael Vargas, CRNA', displayName: 'Vargas, M. (CRNA)', role: 'CRNA', environmentHome: 'Main OR', cell: 'x5515 / (713) 555-0115', active: true },
+  { id: 'staff-15', staffName: 'Deanna Miller, CRNA', displayName: 'Miller, D. (CRNA)', role: 'CRNA', environmentHome: 'Main OR', cell: 'x5516 / (713) 555-0116', active: true },
+
+  // Circulators
+  { id: 'staff-20', staffName: 'Holly Wright, RN', displayName: 'Holly W. (RN)', role: 'Circulator RN', environmentHome: 'Day Surgery', cell: 'x5521 / (713) 555-0121', active: true },
+  { id: 'staff-21', staffName: 'Kashish Mehta, RN', displayName: 'Kashish M. (RN)', role: 'Circulator RN', environmentHome: 'Day Surgery', cell: 'x5522 / (713) 555-0122', active: true },
+  { id: 'staff-22', staffName: 'Arlene Santos, RN', displayName: 'Arlene S. (RN)', role: 'Circulator RN', environmentHome: 'Day Surgery', cell: 'x5523 / (713) 555-0123', active: true },
+  { id: 'staff-23', staffName: 'Jennifer Wilson, RN', displayName: 'Jennifer W. (RN)', role: 'Circulator RN', environmentHome: 'Main OR', cell: 'x5524 / (713) 555-0124', active: true },
+  { id: 'staff-24', staffName: 'Marybeth Quinn, RN', displayName: 'Marybeth Q. (RN)', role: 'Circulator RN', environmentHome: 'Main OR', cell: 'x5525 / (713) 555-0125', active: true },
+  { id: 'staff-25', staffName: 'Sarah Thompson, RN', displayName: 'Sarah T. (RN)', role: 'Circulator RN', environmentHome: 'Main OR', cell: 'x5526 / (713) 555-0126', active: true },
+  { id: 'staff-26', staffName: 'Veronica Nguyen, RN', displayName: 'Veronica N. (RN)', role: 'Circulator RN', environmentHome: 'Main OR', cell: 'x5527 / (713) 555-0127', active: true },
+  { id: 'staff-27', staffName: 'Tanya Jackson, RN', displayName: 'Jackson, T. (RN)', role: 'Circulator RN', environmentHome: 'Main OR', cell: 'x5528 / (713) 555-0128', active: true },
+
+  // Scrub Techs
+  { id: 'staff-30', staffName: 'Stephanie Gomez, CST', displayName: 'Stephanie (ST)', role: 'Scrub Tech', environmentHome: 'Day Surgery', cell: 'x5531 / (713) 555-0131', active: true },
+  { id: 'staff-31', staffName: 'Candace Smith, CST', displayName: 'Candace S. (ST)', role: 'Scrub Tech', environmentHome: 'Day Surgery', cell: 'x5532 / (713) 555-0132', active: true },
+  { id: 'staff-32', staffName: 'Nathalie Simon, CST', displayName: 'Nathalie S. (ST)', role: 'Scrub Tech', environmentHome: 'Day Surgery', cell: 'x5533 / (713) 555-0133', active: true },
+  { id: 'staff-33', staffName: 'David Liu, CST', displayName: 'David L. (ST)', role: 'Scrub Tech', environmentHome: 'Main OR', cell: 'x5534 / (713) 555-0134', active: true },
+  { id: 'staff-34', staffName: 'Kenji Mori, CST', displayName: 'Kenji M. (ST)', role: 'Scrub Tech', environmentHome: 'Main OR', cell: 'x5535 / (713) 555-0135', active: true },
+  { id: 'staff-35', staffName: 'Hector Reyes, CST', displayName: 'Reyes, H. (CST)', role: 'Scrub Tech', environmentHome: 'Main OR', cell: 'x5536 / (713) 555-0136', active: true },
+
+  // Anes Techs
+  { id: 'staff-40', staffName: 'Sam Rodriguez, AT', displayName: 'Sam R. (AT)', role: 'Anes Tech', environmentHome: 'Main OR', cell: 'x5541 / (713) 555-0141', active: true },
+  { id: 'staff-41', staffName: 'Carlos Gonzalez, AT', displayName: 'Carlos G. (AT)', role: 'Anes Tech', environmentHome: 'Day Surgery', cell: 'x5542 / (713) 555-0142', active: true },
+
+  // Pre-Op & PACU Nurses
+  { id: 'staff-50', staffName: 'Rachel Martinez, RN', displayName: 'Rachel M. (RN)', role: 'Pre-Op RN', environmentHome: 'Pre-Op Holding', cell: 'x5551 / (713) 555-0151', active: true },
+  { id: 'staff-51', staffName: 'Kevin Tran, RN', displayName: 'Kevin T. (RN)', role: 'Pre-Op RN', environmentHome: 'Pre-Op Holding', cell: 'x5552 / (713) 555-0152', active: true },
+  { id: 'staff-52', staffName: 'Brenda Hayes, RN', displayName: 'Brenda H. (RN)', role: 'PACU RN', environmentHome: 'PACU', cell: 'x5553 / (713) 555-0153', active: true },
+  { id: 'staff-53', staffName: 'Lisa Cooper, RN', displayName: 'Lisa C. (RN)', role: 'PACU RN', environmentHome: 'PACU', cell: 'x5554 / (713) 555-0154', active: true }
+];
 
 export const initialUsers: User[] = [
-  { id: 'u1', username: 'runner', displayName: 'Board Runner (Alaniz, P / Veronica N)', role: 'board_runner', pin: '1234' },
-  { id: 'u2', username: 'anes', displayName: 'Dr. Alaniz, P (Anesthesiologist)', role: 'anesthesia', pin: '2468' },
-  { id: 'u3', username: 'chargern', displayName: 'Veronica N. (Charge RN)', role: 'charge_rn', pin: '5555' },
-  { id: 'u4', username: 'circulator', displayName: 'Marybeth Q. (Circulating RN)', role: 'circulator', pin: '1111' },
-  { id: 'u5', username: 'admin', displayName: 'OR Director (Superuser)', role: 'superuser', pin: '9999' },
-  { id: 'u6', username: 'guest', displayName: 'Clinical Viewer', role: 'basic_viewer', pin: '' }
+  { id: 'u1', username: 'runner', displayName: 'Board Runner (Alaniz, P / Veronica N)', role: 'board_runner', pin: '1234', password: 'password123', active: true },
+  { id: 'u2', username: 'anes', displayName: 'Dr. Alaniz, P (Anesthesiologist)', role: 'anesthesia', pin: '2468', password: 'password123', active: true },
+  { id: 'u3', username: 'chargern', displayName: 'Veronica N. (Charge RN)', role: 'charge_rn', pin: '5555', password: 'password123', active: true },
+  { id: 'u4', username: 'circulator', displayName: 'Marybeth Q. (Circulating RN)', role: 'circulator', pin: '1111', password: 'password123', active: true },
+  { id: 'u5', username: 'admin', displayName: 'OR Director (Superuser)', role: 'superuser', pin: '9999', password: 'adminpassword', active: true },
+  { id: 'u6', username: 'guest', displayName: 'Clinical Viewer', role: 'basic_viewer', pin: '', password: '', active: true }
 ];
 
 export const initialRooms: OperatingRoom[] = [
@@ -254,7 +310,7 @@ export const initialRunners: BoardRunner[] = [
 export const initialEmrConfig: EmrApiConfig = {
   provider: 'epic_optime',
   endpointUrl: 'https://epic-gateway.hospital.org/interconnect-fhir/v1/optime',
-  clientId: 'perfect-flow-epic-client-7734',
+  clientId: 'perfect-journey-epic-client-7734',
   clientSecretMasked: '••••••••••••••••••••••••3a9b',
   facilityCode: 'MHMC (Memorial Hermann Medical Center)',
   status: 'connected',
@@ -1972,10 +2028,12 @@ export const initialPatients: EpicPatientCase[] = [
   }
 ];
 
-export function getInitialFlowState(): FlowState {
+export function getInitialJourneyState(): JourneyState {
   return {
     version: '1.0.0',
     lastUpdated: new Date().toISOString(),
+    departments: initialDepartments,
+    staffRoster: initialStaffRoster,
     patients: initialPatients,
     rooms: initialRooms,
     runners: initialRunners,
@@ -2003,3 +2061,5 @@ export function getInitialFlowState(): FlowState {
     ]
   };
 }
+
+export const getInitialFlowState = getInitialJourneyState;

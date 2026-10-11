@@ -1,6 +1,6 @@
-# Perfect Flow 🏥⚡
+# Perfect Journey 🏥⚡
 
-> **Perioperative Patient Flow & OR Command Center**  
+> **Perioperative Patient Journey & OR Command Center**  
 > Complementary to **Perfect Board** and **Perfect Call** in the Perfect clinical suite.
 
 Built with Next.js 16 (Turbopack), React 19, TypeScript, and modern dual-theme Vanilla CSS. Engineered specifically for **65" wall touchscreens**, **clinical desktop workstations**, and **mobile smartphones**.
@@ -9,13 +9,13 @@ Built with Next.js 16 (Turbopack), React 19, TypeScript, and modern dual-theme V
 
 ## 🚀 Quick Start
 
-The dev server is running on **port 3002**:
+The dev server is configured with `basePath: '/journey'`:
 ```bash
-npm run dev -- -p 3002
+npm run dev
 ```
 Access the application locally at:
-👉 **[http://localhost:3002/flow](http://localhost:3002/flow)**  
-*(Network access on the hospital/local subnet: `http://192.168.86.84:3002/flow`)*
+👉 **[http://localhost:3000/journey](http://localhost:3000/journey)**  
+*(Network access on the hospital/local subnet: `http://192.168.86.84:3000/journey`)*
 
 ---
 
@@ -77,10 +77,10 @@ Modeled directly after hospital OR Control:
 ---
 
 ## 🗄 Data Model & Epic EMR Integration
-- **State File**: `data/flow_state.json` with safe atomic reads and writes.
+- **State File**: `data/journey_state.json` (with backward compatibility fallback to `data/flow_state.json`) with safe atomic reads and writes.
 - **Epic OpTime Fields**: Every mock case adheres to Epic OpTime schema (MRN, Epic Case ID, CSN/Account #, CPT codes, and OpTime event milestones).
 - **API Endpoints**:
-  - `GET /flow/api/flow`: Returns current FlowState.
-  - `POST /flow/api/flow`: Dispatches patient updates, room updates, and resets.
-  - `POST /flow/api/epic/sync`: Dedicated gateway for receiving Epic OpTime HL7 / FHIR webhook payloads.
-- **Supabase Integration**: Configured in `src/lib/supabase.ts` targeting schema `flow`, ready to connect to your Perfect Call Supabase instance.
+  - `GET /journey/api/journey`: Returns current JourneyState.
+  - `POST /journey/api/journey`: Dispatches patient updates, room updates, and resets.
+  - `POST /journey/api/epic/sync`: Dedicated gateway for receiving Epic OpTime HL7 / FHIR webhook payloads.
+- **Supabase Integration**: Configured in `src/lib/supabase.ts` targeting schema `journey`, ready to connect to your Perfect Call Supabase instance.

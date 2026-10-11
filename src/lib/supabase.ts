@@ -1,9 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Dedicated schema and table configuration for Perfect Flow
-// Uses the dedicated 'flow' PostgreSQL schema to isolate all Flow data
-export const FLOW_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_FLOW_SCHEMA || 'flow';
-export const FLOW_TABLE = process.env.NEXT_PUBLIC_SUPABASE_TABLE || process.env.SUPABASE_FLOW_TABLE || 'app_state';
+// Dedicated schema and table configuration for Perfect Journey
+// Uses the dedicated 'journey' PostgreSQL schema to isolate all Journey data
+export const JOURNEY_SCHEMA = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_JOURNEY_SCHEMA || process.env.SUPABASE_FLOW_SCHEMA || 'journey';
+export const JOURNEY_TABLE = process.env.NEXT_PUBLIC_SUPABASE_TABLE || process.env.SUPABASE_JOURNEY_TABLE || process.env.SUPABASE_FLOW_TABLE || 'app_state';
+
+// Backward compatibility aliases
+export const FLOW_SCHEMA = JOURNEY_SCHEMA;
+export const FLOW_TABLE = JOURNEY_TABLE;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getFlowState, saveFlowState } from '@/lib/storage';
-import { EpicPatientCase } from '@/types/flow';
+import { getJourneyState, saveJourneyState } from '@/lib/storage';
+import { EpicPatientCase } from '@/types/journey';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const state = await getFlowState();
+    const state = await getJourneyState();
 
     // If an Epic incoming case payload is received:
     if (body.epicCase) {
@@ -30,13 +30,13 @@ export async function POST(request: Request) {
         details: `Case #${incomingCase.epicCaseId} synchronized with Epic OpTime`
       });
 
-      await saveFlowState(state);
+      await saveJourneyState(state);
       return NextResponse.json({ success: true, message: 'Epic case synced', state });
     }
 
     return NextResponse.json({
       status: 'online',
-      service: 'Perfect Flow Epic OpTime Gateway',
+      service: 'Perfect Journey Epic OpTime Gateway',
       version: '1.0.0',
       activeCases: state.patients.length
     });

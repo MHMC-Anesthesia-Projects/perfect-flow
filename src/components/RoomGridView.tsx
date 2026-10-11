@@ -1,9 +1,13 @@
 'use client';
 
-import React from 'react';
-import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
+import React, { useState } from 'react';
+import { EpicPatientCase, OperatingRoom, BoardRunner, StaffMember, RoomStaffTeam } from '@/types/journey';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
-import { Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope, LayoutGrid, Layers, CalendarRange } from 'lucide-react';
+import { 
+  Clock, Plus, Phone, AlertTriangle, Check, UserCheck, Stethoscope, 
+  LayoutGrid, Layers, CalendarRange, X, Shield, ChevronRight 
+} from 'lucide-react';
+import { StaffPickerModal } from './StaffPickerModal';
 
 interface RoomGridViewProps {
   rooms: OperatingRoom[];
@@ -15,6 +19,8 @@ interface RoomGridViewProps {
   minTurnoverMinutes?: number;
   orSubView?: 'grid' | 'stacked' | 'timeline';
   onSelectOrSubView?: (view: 'grid' | 'stacked' | 'timeline') => void;
+  staffRoster?: StaffMember[];
+  onUpdateRoomStaff?: (roomId: string, staff: RoomStaffTeam) => void;
 }
 
 export const RoomGridView: React.FC<RoomGridViewProps> = ({
@@ -26,11 +32,28 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
   hipaaProtected,
   minTurnoverMinutes = 15,
   orSubView = 'grid',
-  onSelectOrSubView
+  onSelectOrSubView,
+  staffRoster = [],
+  onUpdateRoomStaff
 }) => {
+  const [isCommandRosterOpen, setIsCommandRosterOpen] = useState(false);
+
+  // Staff Picker State
+  const [pickerState, setPickerState] = useState<{
+    isOpen: boolean;
+    roomId: string;
+    roomName: string;
+    roleSlot: 'anesthesiologist' | 'crna' | 'circulatorRN' | 'scrubTech' | 'anesTech';
+    roleLabel: string;
+    currentStaffName: string;
+  } | null>(null);
+
   const getElapsedMinutes = (startTimeStr?: string) => {
     if (!startTimeStr) return null;
-    const [h, m] = startTimeStr.split(':').map(Number);
+    const parts = startTimeStr.split(':');
+    if (parts.length < 2) return null;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
     if (isNaN(h) || isNaN(m)) return null;
 
     const now = new Date();
@@ -46,202 +69,178 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
+  const handleStaffSelected = (displayName: string) => {
+    if (!pickerState || !onUpdateRoomStaff) return;
+    const room = rooms.find(r => r.id === pickerState.roomId);
+    if (!room) return;
+
+    const currentStaff: RoomStaffTeam = room.assignedStaff || {
+      anesthesiologist: '',
+      crna: '',
+      circulatorRN: '',
+      scrubTech: '',
+      anesTech: ''
+    };
+
+    const updatedStaff: RoomStaffTeam = {
+      ...currentStaff,
+      [pickerState.roleSlot]: displayName
+    };
+
+    onUpdateRoomStaff(room.id, updatedStaff);
+  };
+
   return (
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: '220px 1fr',
-      height: 'calc(100vh - 112px)',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
       overflow: 'hidden',
-      background: 'var(--bg-app)'
+      background: 'var(--bg-app)',
+      position: 'relative'
     }}>
-      {/* LEFT SIDEBAR: BOARD RUNNERS, LATE SHIFTS & FLOATS (Exact OR Control twin) */}
-      <aside style={{
-        background: 'var(--bg-sidebar)',
-        borderRight: '1px solid var(--border-medium)',
-        overflowY: 'auto',
-        padding: '14px 12px',
+      {/* Top Header Bar for OR Suites */}
+      <div style={{
+        padding: '10px 20px',
+        background: 'var(--surface-header)',
+        borderBottom: '1px solid var(--border-medium)',
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
         gap: 12
       }}>
-        <div style={{
-          fontSize: 11,
-          fontWeight: 900,
-          textTransform: 'uppercase',
-          letterSpacing: 0.8,
-          color: 'var(--text-muted)',
-          paddingBottom: 6,
-          borderBottom: '1px solid var(--border-light)'
-        }}>
-          PERIOP COMMAND ROSTER
-        </div>
-
-        {runners.map((runner) => {
-          let badgeColor = 'var(--surface-card)';
-          let borderColor = 'var(--border-light)';
-          let textColor = 'var(--text-primary)';
-
-          if (runner.role === 'anes') {
-            badgeColor = 'rgba(2, 132, 199, 0.12)';
-            borderColor = 'var(--accent-primary)';
-            textColor = 'var(--accent-primary)';
-          } else if (runner.role === 'late') {
-            badgeColor = 'rgba(147, 51, 234, 0.1)';
-            borderColor = 'var(--phase-closing-bg)';
-          } else if (runner.role === 'float') {
-            badgeColor = 'rgba(22, 163, 74, 0.1)';
-            borderColor = 'var(--phase-surgery-bg)';
-          }
-
-          return (
-            <div
-              key={runner.id}
-              style={{
-                background: badgeColor,
-                border: `1px solid ${borderColor}`,
-                borderRadius: 'var(--radius-sm)',
-                padding: '8px 10px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2
-              }}
-            >
-              <div style={{
-                fontSize: 11,
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-                color: textColor
-              }}>
-                {runner.title}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>
-                {runner.staffName}
-              </div>
-              {runner.pagerOrPhone && (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  {runner.pagerOrPhone}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </aside>
-
-      {/* MAIN OPERATING ROOMS SECTION */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        {/* View Switcher Header Bar */}
-        <div style={{
-          padding: '8px 16px',
-          background: 'var(--surface-header)',
-          borderBottom: '1px solid var(--border-medium)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            OPERATING SUITES COMMAND VIEW
+            OPERATING SUITES COMMAND VIEW ({rooms.length} Suites)
           </div>
 
-          <div style={{
-            display: 'flex',
-            background: 'var(--surface-subtle)',
-            border: '1px solid var(--border-medium)',
-            borderRadius: 'var(--radius-sm)',
-            padding: 3,
-            gap: 4
-          }}>
-            <button
-              type="button"
-              onClick={() => onSelectOrSubView && onSelectOrSubView('grid')}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 4,
-                border: 'none',
-                background: orSubView === 'grid' ? 'var(--accent-primary)' : 'transparent',
-                color: orSubView === 'grid' ? '#ffffff' : 'var(--text-secondary)',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: orSubView === 'grid' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
-              }}
-            >
-              <LayoutGrid size={13} />
-              <span>Suite Grid</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onSelectOrSubView && onSelectOrSubView('stacked')}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 4,
-                border: 'none',
-                background: orSubView === 'stacked' ? 'var(--accent-primary)' : 'transparent',
-                color: orSubView === 'stacked' ? '#ffffff' : 'var(--text-secondary)',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: orSubView === 'stacked' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
-              }}
-            >
-              <Layers size={13} />
-              <span>Consolidated Stacked</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onSelectOrSubView && onSelectOrSubView('timeline')}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 4,
-                border: 'none',
-                background: orSubView === 'timeline' ? 'var(--accent-primary)' : 'transparent',
-                color: orSubView === 'timeline' ? '#ffffff' : 'var(--text-secondary)',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: orSubView === 'timeline' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
-              }}
-            >
-              <CalendarRange size={13} />
-              <span>Gantt Timeline</span>
-            </button>
-          </div>
+          {/* Reworked Command Roster Button */}
+          <button
+            type="button"
+            onClick={() => setIsCommandRosterOpen(prev => !prev)}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 'var(--radius-sm)',
+              border: isCommandRosterOpen ? '1px solid var(--accent-primary)' : '1px solid var(--border-medium)',
+              background: isCommandRosterOpen ? 'rgba(59, 130, 246, 0.15)' : 'var(--surface-subtle)',
+              color: isCommandRosterOpen ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: isCommandRosterOpen ? '0 0 8px rgba(59, 130, 246, 0.3)' : 'none'
+            }}
+            title="Click to toggle Periop Command Roster & Logistics panel"
+          >
+            <Phone size={13} style={{ color: 'var(--accent-primary)' }} />
+            <span>Periop Command Roster ({runners.length})</span>
+          </button>
         </div>
 
-        <main style={{
-          flex: 1,
-          overflowX: 'auto',
-          overflowY: 'auto',
-          padding: '16px',
+        {/* View Switcher Tabs: Grid, Stacked, Timeline */}
+        <div style={{
           display: 'flex',
-          gap: 14
+          background: 'var(--surface-subtle)',
+          border: '1px solid var(--border-medium)',
+          borderRadius: 'var(--radius-sm)',
+          padding: 3,
+          gap: 4
         }}>
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('grid')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'grid' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'grid' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <LayoutGrid size={13} />
+            <span>Suite Grid</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('stacked')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'stacked' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'stacked' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'stacked' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <Layers size={13} />
+            <span>Consolidated Stacked</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectOrSubView && onSelectOrSubView('timeline')}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: 'none',
+              background: orSubView === 'timeline' ? 'var(--accent-primary)' : 'transparent',
+              color: orSubView === 'timeline' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: orSubView === 'timeline' ? '0 2px 4px rgba(2, 132, 199, 0.3)' : 'none'
+            }}
+          >
+            <CalendarRange size={13} />
+            <span>Gantt Timeline</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Suite Columns Area (100% full width!) */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        gap: 14,
+        padding: 14,
+        overflowX: 'auto',
+        overflowY: 'auto'
+      }}>
         {rooms.map((room) => {
           const roomPatients = patients.filter(p => p.roomNumber === room.name);
           const activeCase = roomPatients.find(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing');
           const queuedCases = roomPatients.filter(p => p.id !== activeCase?.id && p.currentPhase !== 'completed' && p.currentPhase !== 'pacu' && p.currentPhase !== 'phase2');
 
           const elapsedMins = activeCase ? getElapsedMinutes(activeCase.surgeryStartTime || activeCase.inRoomTime) : null;
-          const activeEndMins = activeCase ? parseTimeToMinutes(activeCase.outRoomTime || activeCase.schedOutRoom || activeCase.scheduledEndTime) : null;
+          const staff = room.assignedStaff;
 
           return (
             <div
               key={room.id}
               style={{
-                minWidth: 320,
-                maxWidth: 340,
-                flex: '0 0 320px',
+                minWidth: 330,
+                maxWidth: 350,
+                flex: '0 0 330px',
                 background: 'var(--surface-card)',
                 borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-medium)',
@@ -278,6 +277,152 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                 </div>
               </div>
 
+              {/* Clickable Assigned Staff Strip */}
+              <div style={{
+                padding: '4px 8px',
+                background: 'var(--surface-subtle)',
+                borderBottom: '1px solid var(--border-light)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                overflowX: 'auto'
+              }}>
+                {/* MD */}
+                <button
+                  type="button"
+                  onClick={() => setPickerState({
+                    isOpen: true,
+                    roomId: room.id,
+                    roomName: room.name,
+                    roleSlot: 'anesthesiologist',
+                    roleLabel: 'Anesthesiologist',
+                    currentStaffName: staff?.anesthesiologist || ''
+                  })}
+                  title={`Anesthesiologist: ${staff?.anesthesiologist || 'Unassigned (Tap to assign)'}`}
+                  style={{
+                    padding: '2px 5px',
+                    borderRadius: 3,
+                    border: '1px solid #3b82f6',
+                    background: '#1d4ed8',
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {staff?.anesthesiologist ? staff.anesthesiologist.split(' ')[0] : '+ MD'}
+                </button>
+
+                {/* CRNA */}
+                <button
+                  type="button"
+                  onClick={() => setPickerState({
+                    isOpen: true,
+                    roomId: room.id,
+                    roomName: room.name,
+                    roleSlot: 'crna',
+                    roleLabel: 'CRNA',
+                    currentStaffName: staff?.crna || ''
+                  })}
+                  title={`CRNA: ${staff?.crna || 'Unassigned (Tap to assign)'}`}
+                  style={{
+                    padding: '2px 5px',
+                    borderRadius: 3,
+                    border: '1px solid #475569',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {staff?.crna ? staff.crna.split(' ')[0] : '+ CRNA'}
+                </button>
+
+                {/* Circulator RN */}
+                <button
+                  type="button"
+                  onClick={() => setPickerState({
+                    isOpen: true,
+                    roomId: room.id,
+                    roomName: room.name,
+                    roleSlot: 'circulatorRN',
+                    roleLabel: 'Circulating RN',
+                    currentStaffName: staff?.circulatorRN || ''
+                  })}
+                  title={`Circulating RN: ${staff?.circulatorRN || 'Unassigned (Tap to assign)'}`}
+                  style={{
+                    padding: '2px 5px',
+                    borderRadius: 3,
+                    border: '1px solid #4ade80',
+                    background: '#86efac',
+                    color: '#14532d',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  *{staff?.circulatorRN ? staff.circulatorRN.replace(' (RN)', '').split(' ')[0] : '+ RN'}
+                </button>
+
+                {/* Scrub Tech */}
+                <button
+                  type="button"
+                  onClick={() => setPickerState({
+                    isOpen: true,
+                    roomId: room.id,
+                    roomName: room.name,
+                    roleSlot: 'scrubTech',
+                    roleLabel: 'Scrub Tech',
+                    currentStaffName: staff?.scrubTech || ''
+                  })}
+                  title={`Scrub Tech: ${staff?.scrubTech || 'Unassigned (Tap to assign)'}`}
+                  style={{
+                    padding: '2px 5px',
+                    borderRadius: 3,
+                    border: '1px solid #d8b4fe',
+                    background: '#e9d5ff',
+                    color: '#581c87',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  *{staff?.scrubTech ? staff.scrubTech.replace(' (ST)', '').split(' ')[0] : '+ ST'}
+                </button>
+
+                {/* Anes Tech */}
+                <button
+                  type="button"
+                  onClick={() => setPickerState({
+                    isOpen: true,
+                    roomId: room.id,
+                    roomName: room.name,
+                    roleSlot: 'anesTech',
+                    roleLabel: 'Anesthesia Tech',
+                    currentStaffName: staff?.anesTech || ''
+                  })}
+                  title={`Anes Tech: ${staff?.anesTech || 'Unassigned (Tap to assign)'}`}
+                  style={{
+                    padding: '2px 5px',
+                    borderRadius: 3,
+                    border: '1px solid #fbbf24',
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {staff?.anesTech ? staff.anesTech.split(' ')[0] : '+ AT'}
+                </button>
+              </div>
+
               {/* Room Body Container */}
               <div style={{ flex: 1, padding: 10, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
                 {/* 1. PROMINENT ACTIVE IN-ROOM CASE */}
@@ -297,7 +442,7 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                       position: 'relative'
                     }}
                   >
-                    {/* Active Top Row: Case #, Surgeon, Add-On */}
+                    {/* Active Top Row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{
@@ -309,84 +454,67 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                           fontWeight: 900,
                           fontFamily: 'var(--font-mono)'
                         }}>
-                          #{activeCase.caseOrder}
+                          CASE #{activeCase.caseOrder}
                         </span>
-
-                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>
-                          {activeCase.surgeon}
-                        </span>
-                      </div>
-
-                      {activeCase.isAddOn && (
-                        <span style={{
-                          background: 'var(--alert-red)',
-                          color: '#fff',
-                          fontSize: 10,
-                          fontWeight: 900,
-                          padding: '1px 6px',
-                          borderRadius: 3,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2
-                        }}>
-                          <Plus size={10} strokeWidth={3} /> ADD-ON
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Patient Name & Bed */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
-                        {hipaaProtected ? activeCase.patientInitials : activeCase.patientName}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                        {activeCase.age}y • {activeCase.inpatientBed || 'Ambulatory'}
-                      </span>
-                    </div>
-
-                    {/* Procedure Summary */}
-                    <div style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      lineHeight: 1.3,
-                      color: 'var(--text-secondary)',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      {activeCase.primaryProcedure}
-                    </div>
-
-                    {/* Live Surgical Elapsed Timer */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: 'var(--surface-card)',
-                      padding: '6px 8px',
-                      borderRadius: 4,
-                      border: '1px solid var(--border-light)',
-                      fontSize: 11
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--phase-surgery-bg)', fontWeight: 800 }}>
-                        <Clock size={13} />
-                        <span>Cut: {activeCase.surgeryStartTime || activeCase.inRoomTime}</span>
+                        {activeCase.isAddOn && (
+                          <span style={{
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                            background: '#ef4444',
+                            color: '#fff',
+                            fontSize: 10,
+                            fontWeight: 900
+                          }}>
+                            ADD-ON
+                          </span>
+                        )}
                       </div>
 
                       {elapsedMins !== null && (
                         <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontSize: 12,
                           fontWeight: 900,
-                          fontFamily: 'var(--font-mono)',
-                          color: 'var(--accent-primary)'
+                          color: 'var(--accent-primary)',
+                          fontFamily: 'var(--font-mono)'
                         }}>
-                          {elapsedMins} min elapsed
+                          <span className="pulse-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--phase-surgery-bg)', display: 'inline-block' }} />
+                          <Clock size={12} />
+                          <span>{elapsedMins}m in cut</span>
                         </div>
                       )}
                     </div>
 
-                    {/* 1-Tap Quick Action Buttons */}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                    {/* Patient Name & Primary Procedure */}
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--text-primary)' }}>
+                        {hipaaProtected ? activeCase.patientInitials : activeCase.patientName}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginTop: 2 }}>
+                        {activeCase.primaryProcedure}
+                      </div>
+                    </div>
+
+                    {/* Clinical Team Details */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 4,
+                      background: 'var(--surface-card)',
+                      padding: 6,
+                      borderRadius: 4,
+                      fontSize: 11
+                    }}>
+                      <div>Surgeon: <strong>Dr. {activeCase.surgeon}</strong></div>
+                      <div>Anes: <strong>{activeCase.anesthesiologist}</strong></div>
+                      <div>RN: <strong>{activeCase.circulatorRN || '—'}</strong></div>
+                      <div>Tech: <strong>{activeCase.scrubTech || '—'}</strong></div>
+                    </div>
+
+                    {/* Rapid Milestones */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 2 }}>
                       {activeCase.currentPhase === 'in_surgery' && (
                         <button
                           type="button"
@@ -395,15 +523,14 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                             onUpdatePatient(activeCase.id, {
                               currentPhase: 'closing',
                               surgeryEndTime: formatTimeNow()
-                            }, 'Marked Case Closing');
+                            }, 'Surgical Closing Initiated');
                           }}
                           style={{
-                            flex: 1,
-                            padding: '6px 0',
-                            borderRadius: 4,
+                            padding: '6px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: 'none',
                             background: 'var(--phase-closing-bg)',
                             color: '#fff',
-                            border: 'none',
                             fontSize: 11,
                             fontWeight: 800,
                             cursor: 'pointer'
@@ -413,26 +540,24 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                         </button>
                       )}
 
-                      {activeCase.currentPhase === 'closing' && (
+                      {(activeCase.currentPhase === 'in_surgery' || activeCase.currentPhase === 'closing') && (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const now = formatTimeNow();
                             onUpdatePatient(activeCase.id, {
                               currentPhase: 'pacu',
-                              outRoomTime: now,
-                              pacuArrivalTime: now,
-                              pacuLocation: 'PACU Bay 01'
-                            }, 'Transferred to PACU');
+                              outRoomTime: formatTimeNow(),
+                              pacuArrivalTime: formatTimeNow(),
+                              pacuLocation: `PACU Bay 0${Math.floor(Math.random() * 6) + 1}`
+                            }, 'Transferred to PACU Phase I Recovery');
                           }}
                           style={{
-                            flex: 1,
-                            padding: '6px 0',
-                            borderRadius: 4,
+                            padding: '6px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: 'none',
                             background: 'var(--phase-pacu-bg)',
                             color: '#fff',
-                            border: 'none',
                             fontSize: 11,
                             fontWeight: 800,
                             cursor: 'pointer'
@@ -441,169 +566,184 @@ export const RoomGridView: React.FC<RoomGridViewProps> = ({
                           Send to PACU
                         </button>
                       )}
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpdatePatient(activeCase.id, {
-                            reportCalled: !activeCase.reportCalled,
-                            reportCalledTime: !activeCase.reportCalled ? formatTimeNow() : undefined
-                          });
-                        }}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: 4,
-                          background: activeCase.reportCalled ? 'var(--accent-primary)' : 'var(--surface-card)',
-                          color: activeCase.reportCalled ? '#fff' : 'var(--text-secondary)',
-                          border: '1px solid var(--border-medium)',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                        title="Toggle Report Called to PACU/Floor"
-                      >
-                        <Phone size={11} /> {activeCase.reportCalled ? 'Report Called' : 'Call Report'}
-                      </button>
                     </div>
                   </div>
                 ) : (
                   <div style={{
-                    padding: '24px 12px',
-                    textAlign: 'center',
-                    background: 'var(--surface-subtle)',
-                    border: '1px dashed var(--border-medium)',
+                    padding: 16,
                     borderRadius: 'var(--radius-sm)',
+                    border: '1px dashed var(--border-medium)',
+                    textAlign: 'center',
                     color: 'var(--text-muted)',
                     fontSize: 12,
                     fontWeight: 600
                   }}>
-                    {room.status === 'turnover' ? 'Terminal Cleaning / Room Turnover' : 'No Active Case in Room'}
+                    {room.status === 'turnover' ? 'Room Turnover in progress...' : 'Suite ready for next case'}
                   </div>
                 )}
 
-                {/* 2. QUEUED UPCOMING CASES STACK */}
+                {/* 2. QUEUED UPCOMING CASES */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{
-                    fontSize: 10,
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                    color: 'var(--text-muted)'
-                  }}>
-                    UPCOMING CASES ({queuedCases.length})
+                  <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Follow-On Cases ({queuedCases.length})
                   </div>
 
-                  {queuedCases.map((queued) => {
-                    const queuedStartMins = parseTimeToMinutes(queued.inRoomTime || queued.schedInRoom || queued.scheduledStartTime);
-                    const turnoverBuffer = (activeEndMins !== null && queuedStartMins !== null) ? queuedStartMins - activeEndMins : null;
-                    const isTurnoverTight = turnoverBuffer !== null && turnoverBuffer < minTurnoverMinutes;
-
-                    return (
-                      <div
-                        key={queued.id}
-                        onClick={() => onSelectPatient(queued)}
-                        style={{
-                          background: 'var(--surface-card)',
-                          border: isTurnoverTight ? '1px solid var(--alert-red)' : '1px solid var(--border-light)',
-                          borderRadius: 'var(--radius-sm)',
-                          padding: '8px 10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 4,
-                          transition: 'border-color var(--transition-fast)'
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent-primary)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = isTurnoverTight ? 'var(--alert-red)' : 'var(--border-light)')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <span style={{
-                              padding: '1px 5px',
-                              borderRadius: 3,
-                              background: 'var(--surface-subtle)',
-                              border: '1px solid var(--border-medium)',
-                              fontSize: 10,
-                              fontWeight: 800,
-                              fontFamily: 'var(--font-mono)'
-                            }}>
-                              #{queued.caseOrder}
-                            </span>
-                            <span style={{ fontWeight: 700 }}>{queued.surgeon}</span>
-                          </div>
-
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
-                            {queued.schedInRoom || queued.scheduledStartTime}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {hipaaProtected ? queued.patientInitials : queued.patientName}
-                          </span>
-
-                          {queued.preOpBay && (
-                            <span style={{ color: 'var(--phase-preop-bg)', fontWeight: 700 }}>
-                              {queued.preOpBay}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Tight Turnover Warning Alert */}
-                        {isTurnoverTight && (
-                          <div style={{
-                            background: 'var(--alert-red-light)',
-                            color: 'var(--alert-red)',
-                            border: '1px solid var(--alert-red-border)',
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 800,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4
-                          }}>
-                            <AlertTriangle size={11} />
-                            <span>Tight Turnover: {turnoverBuffer}m buffer (&lt;{minTurnoverMinutes}m required)</span>
-                          </div>
-                        )}
-
-                        {/* Readiness gatekeeper dots */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, fontSize: 10 }}>
-                          <span style={{
-                            padding: '1px 5px',
-                            borderRadius: 3,
-                            background: queued.siteMarked === 'yes' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
-                            color: queued.siteMarked === 'yes' ? 'var(--phase-surgery-bg)' : 'var(--alert-red)',
-                            fontWeight: 800
-                          }}>
-                            {queued.siteMarked === 'yes' ? 'Site Marked' : 'Site Pending'}
-                          </span>
-
-                          <span style={{
-                            padding: '1px 5px',
-                            borderRadius: 3,
-                            background: queued.anesthesiaReady ? 'rgba(2, 132, 199, 0.15)' : 'var(--surface-subtle)',
-                            color: queued.anesthesiaReady ? 'var(--accent-primary)' : 'var(--text-muted)',
-                            fontWeight: 700
-                          }}>
-                            {queued.anesthesiaReady ? 'Anes Ready' : 'Anes Pending'}
-                          </span>
-                        </div>
+                  {queuedCases.map((queued) => (
+                    <div
+                      key={queued.id}
+                      onClick={() => onSelectPatient(queued)}
+                      style={{
+                        padding: 8,
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--surface-subtle)',
+                        border: '1px solid var(--border-light)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+                          Case #{queued.caseOrder} • {queued.schedInRoom || queued.scheduledStartTime}
+                        </span>
+                        <span style={{
+                          fontSize: 10,
+                          padding: '1px 5px',
+                          borderRadius: 3,
+                          background: queued.preOpReady ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                          color: queued.preOpReady ? '#22c55e' : '#ca8a04',
+                          fontWeight: 800
+                        }}>
+                          {queued.preOpReady ? 'Pre-Op Cleared' : 'In Holding'}
+                        </span>
                       </div>
-                    );
-                  })}
+
+                      <div style={{ fontSize: 13, fontWeight: 800 }}>
+                        {hipaaProtected ? queued.patientInitials : queued.patientName}
+                      </div>
+
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {queued.primaryProcedure} (Dr. {queued.surgeon})
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           );
         })}
-      </main>
+      </div>
+
+      {/* Slide-Out Periop Command Roster Drawer */}
+      {isCommandRosterOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 48,
+            right: 0,
+            bottom: 0,
+            width: 320,
+            background: 'var(--surface-header)',
+            borderLeft: '1px solid var(--border-medium)',
+            boxShadow: 'var(--shadow-lg)',
+            zIndex: 30,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto'
+          }}
+        >
+          <div style={{
+            padding: '14px 16px',
+            borderBottom: '1px solid var(--border-medium)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Phone size={16} style={{ color: 'var(--accent-primary)' }} />
+              <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase' }}>
+                Periop Command Roster
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCommandRosterOpen(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {runners.map((runner) => {
+              let badgeColor = 'var(--surface-card)';
+              let borderColor = 'var(--border-light)';
+              let textColor = 'var(--text-primary)';
+
+              if (runner.role === 'anes') {
+                badgeColor = 'rgba(2, 132, 199, 0.12)';
+                borderColor = 'var(--accent-primary)';
+                textColor = 'var(--accent-primary)';
+              } else if (runner.role === 'late') {
+                badgeColor = 'rgba(147, 51, 234, 0.1)';
+                borderColor = 'var(--phase-closing-bg)';
+              } else if (runner.role === 'float') {
+                badgeColor = 'rgba(22, 163, 74, 0.1)';
+                borderColor = 'var(--phase-surgery-bg)';
+              }
+
+              return (
+                <div
+                  key={runner.id}
+                  style={{
+                    background: badgeColor,
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2
+                  }}
+                >
+                  <div style={{
+                    fontSize: 11,
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    color: textColor
+                  }}>
+                    {runner.title}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>
+                    {runner.staffName}
+                  </div>
+                  {runner.pagerOrPhone && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                      {runner.pagerOrPhone}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Staff Picker Modal */}
+      {pickerState && (
+        <StaffPickerModal
+          isOpen={pickerState.isOpen}
+          onClose={() => setPickerState(null)}
+          roomId={pickerState.roomId}
+          roomName={pickerState.roomName}
+          roleSlot={pickerState.roleSlot}
+          roleLabel={pickerState.roleLabel}
+          currentStaffName={pickerState.currentStaffName}
+          staffRoster={staffRoster}
+          onSelectStaff={handleStaffSelected}
+        />
+      )}
     </div>
-  </div>
-);
+  );
 };

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EpicPatientCase, OperatingRoom, BoardRunner } from '@/types/flow';
+import { EpicPatientCase, OperatingRoom, BoardRunner, StaffMember, RoomStaffTeam } from '@/types/journey';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
 import { Plus, LayoutGrid, Layers, Activity, Filter, Clock, CalendarRange } from 'lucide-react';
+import { StaffPickerModal } from './StaffPickerModal';
 
 interface OrStackedViewProps {
   rooms: OperatingRoom[];
@@ -15,6 +16,8 @@ interface OrStackedViewProps {
   minTurnoverMinutes?: number;
   orSubView?: 'grid' | 'stacked' | 'timeline';
   onSelectOrSubView?: (view: 'grid' | 'stacked' | 'timeline') => void;
+  staffRoster?: StaffMember[];
+  onUpdateRoomStaff?: (roomId: string, staff: RoomStaffTeam) => void;
 }
 
 export const OrStackedView: React.FC<OrStackedViewProps> = ({
@@ -26,8 +29,18 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
   hipaaProtected,
   minTurnoverMinutes = 15,
   orSubView = 'stacked',
-  onSelectOrSubView
+  onSelectOrSubView,
+  staffRoster = [],
+  onUpdateRoomStaff
 }) => {
+  const [pickerState, setPickerState] = useState<{
+    isOpen: boolean;
+    roomId: string;
+    roomName: string;
+    roleSlot: 'anesthesiologist' | 'crna' | 'circulatorRN' | 'scrubTech' | 'anesTech';
+    roleLabel: string;
+    currentStaffName: string;
+  } | null>(null);
   const [selectedDept, setSelectedDept] = useState<'Day Surgery' | 'Main OR' | 'all'>('Day Surgery');
 
   const getElapsedMinutes = (startTimeStr?: string) => {
@@ -325,93 +338,146 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
                 </div>
 
                 {/* STAFF COLOR BLOCKS STRIP (Anesthesiologist, CRNA, Circulator RN, Scrub Tech, Anes Tech) */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
                   {/* Cyan Box: Anesthesiologist (MD) */}
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setPickerState({
+                      isOpen: true,
+                      roomId: room.id,
+                      roomName: room.name,
+                      roleSlot: 'anesthesiologist',
+                      roleLabel: 'Anesthesiologist',
+                      currentStaffName: staff?.anesthesiologist || ''
+                    })}
                     style={{
                       background: '#7dd3fc',
                       color: '#0369a1',
                       padding: '3px 8px',
-                      borderRadius: 2,
+                      borderRadius: 3,
+                      border: '1px solid #38bdf8',
                       fontSize: 11,
                       fontWeight: 800,
                       fontFamily: 'var(--font-mono)',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer'
                     }}
-                    title={`Anesthesiologist: ${staff?.anesthesiologist || 'Unassigned'}`}
+                    title={`Anesthesiologist: ${staff?.anesthesiologist || 'Unassigned (Tap to assign)'}`}
                   >
                     {staff?.anesthesiologist ? staff.anesthesiologist.split(' ')[0] : 'MD'}
-                  </div>
+                  </button>
 
                   {/* Dark Obsidian Box: CRNA */}
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setPickerState({
+                      isOpen: true,
+                      roomId: room.id,
+                      roomName: room.name,
+                      roleSlot: 'crna',
+                      roleLabel: 'CRNA',
+                      currentStaffName: staff?.crna || ''
+                    })}
                     style={{
                       background: '#0f172a',
                       color: '#f8fafc',
                       padding: '3px 8px',
-                      borderRadius: 2,
+                      borderRadius: 3,
+                      border: '1px solid #475569',
                       fontSize: 11,
                       fontWeight: 800,
                       fontFamily: 'var(--font-mono)',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer'
                     }}
-                    title={`CRNA: ${staff?.crna || 'Unassigned'}`}
+                    title={`CRNA: ${staff?.crna || 'Unassigned (Tap to assign)'}`}
                   >
                     {staff?.crna ? staff.crna.split(' ')[0] : 'CRNA'}
-                  </div>
+                  </button>
 
                   {/* Light Green Box: Circulating RN with Star */}
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setPickerState({
+                      isOpen: true,
+                      roomId: room.id,
+                      roomName: room.name,
+                      roleSlot: 'circulatorRN',
+                      roleLabel: 'Circulating RN',
+                      currentStaffName: staff?.circulatorRN || ''
+                    })}
                     style={{
                       background: '#86efac',
                       color: '#14532d',
                       padding: '3px 8px',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       fontSize: 11,
                       fontWeight: 800,
                       fontFamily: 'var(--font-mono)',
                       whiteSpace: 'nowrap',
-                      border: '1px solid #4ade80'
+                      border: '1px solid #4ade80',
+                      cursor: 'pointer'
                     }}
-                    title={`Circulating RN: ${staff?.circulatorRN || 'Unassigned'}`}
+                    title={`Circulating RN: ${staff?.circulatorRN || 'Unassigned (Tap to assign)'}`}
                   >
-                    *{staff?.circulatorRN ? staff.circulatorRN.replace(' (RN)', '') : 'RN'}
-                  </div>
+                    *{staff?.circulatorRN ? staff.circulatorRN.replace(' (RN)', '').split(' ')[0] : 'RN'}
+                  </button>
 
                   {/* Lavender/Purple Box: Scrub Tech with Star */}
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setPickerState({
+                      isOpen: true,
+                      roomId: room.id,
+                      roomName: room.name,
+                      roleSlot: 'scrubTech',
+                      roleLabel: 'Scrub Tech',
+                      currentStaffName: staff?.scrubTech || ''
+                    })}
                     style={{
                       background: '#e9d5ff',
                       color: '#581c87',
                       padding: '3px 8px',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       fontSize: 11,
                       fontWeight: 800,
                       fontFamily: 'var(--font-mono)',
                       whiteSpace: 'nowrap',
-                      border: '1px solid #d8b4fe'
+                      border: '1px solid #d8b4fe',
+                      cursor: 'pointer'
                     }}
-                    title={`Scrub Tech: ${staff?.scrubTech || 'Unassigned'}`}
+                    title={`Scrub Tech: ${staff?.scrubTech || 'Unassigned (Tap to assign)'}`}
                   >
-                    *{staff?.scrubTech ? staff.scrubTech.replace(' (ST)', '') : 'ST'}
-                  </div>
+                    *{staff?.scrubTech ? staff.scrubTech.replace(' (ST)', '').split(' ')[0] : 'ST'}
+                  </button>
 
                   {/* Gold Box: Anes Tech */}
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => setPickerState({
+                      isOpen: true,
+                      roomId: room.id,
+                      roomName: room.name,
+                      roleSlot: 'anesTech',
+                      roleLabel: 'Anesthesia Tech',
+                      currentStaffName: staff?.anesTech || ''
+                    })}
                     style={{
                       background: '#fde047',
                       color: '#854d0e',
                       padding: '3px 7px',
-                      borderRadius: 2,
+                      borderRadius: 3,
+                      border: '1px solid #fbbf24',
                       fontSize: 11,
                       fontWeight: 800,
                       fontFamily: 'var(--font-mono)',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer'
                     }}
-                    title={`Anesthesia Tech: ${staff?.anesTech || 'Anes Tech'}`}
+                    title={`Anesthesia Tech: ${staff?.anesTech || 'Unassigned (Tap to assign)'}`}
                   >
-                    Tech
-                  </div>
+                    {staff?.anesTech ? staff.anesTech.split(' ')[0] : 'Tech'}
+                  </button>
 
                   {/* Dark Slate Box: Float / Standby */}
                   <div
@@ -645,6 +711,36 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
           );
         })}
       </div>
+      {/* Staff Picker Modal */}
+      {pickerState && (
+        <StaffPickerModal
+          isOpen={pickerState.isOpen}
+          onClose={() => setPickerState(null)}
+          roomId={pickerState.roomId}
+          roomName={pickerState.roomName}
+          roleSlot={pickerState.roleSlot}
+          roleLabel={pickerState.roleLabel}
+          currentStaffName={pickerState.currentStaffName}
+          staffRoster={staffRoster}
+          onSelectStaff={(displayName) => {
+            if (!pickerState || !onUpdateRoomStaff) return;
+            const room = rooms.find(r => r.id === pickerState.roomId);
+            if (!room) return;
+            const currentStaff: RoomStaffTeam = room.assignedStaff || {
+              anesthesiologist: '',
+              crna: '',
+              circulatorRN: '',
+              scrubTech: '',
+              anesTech: ''
+            };
+            const updatedStaff: RoomStaffTeam = {
+              ...currentStaff,
+              [pickerState.roleSlot]: displayName
+            };
+            onUpdateRoomStaff(room.id, updatedStaff);
+          }}
+        />
+      )}
     </div>
   );
 };

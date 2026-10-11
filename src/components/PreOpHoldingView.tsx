@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EpicPatientCase } from '@/types/flow';
+import { EpicPatientCase } from '@/types/journey';
 import { 
   Check, X, Phone, UserCheck, Stethoscope, AlertTriangle, 
   ShieldCheck, ArrowRight, LayoutGrid, List, Sparkles, Filter 
@@ -12,16 +12,25 @@ interface PreOpHoldingViewProps {
   onSelectPatient: (patient: EpicPatientCase) => void;
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
+  displayMode?: 'card' | 'table';
+  onDisplayModeChange?: (mode: 'card' | 'table') => void;
 }
 
 export const PreOpHoldingView: React.FC<PreOpHoldingViewProps> = ({
   patients,
   onSelectPatient,
   onUpdatePatient,
-  hipaaProtected
+  hipaaProtected,
+  displayMode: propDisplayMode,
+  onDisplayModeChange: propOnDisplayModeChange
 }) => {
   // Display mode: 'card' (Bay Tiles) or 'table' (Manager Worklist Table)
-  const [displayMode, setDisplayMode] = useState<'card' | 'table'>('card');
+  const [internalDisplayMode, setInternalDisplayMode] = useState<'card' | 'table'>('card');
+  const displayMode = propDisplayMode || internalDisplayMode;
+  const setDisplayMode = (m: 'card' | 'table') => {
+    setInternalDisplayMode(m);
+    if (propOnDisplayModeChange) propOnDisplayModeChange(m);
+  };
   const [filterReadyOnly, setFilterReadyOnly] = useState<boolean>(false);
 
   // Filter patients that are currently in Pre-Op or scheduled next

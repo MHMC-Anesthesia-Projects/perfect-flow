@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AuditLogEntry } from '@/types/flow';
+import { AuditLogEntry } from '@/types/journey';
 import { X, ShieldCheck, Clock } from 'lucide-react';
 
 interface AuditDrawerProps {

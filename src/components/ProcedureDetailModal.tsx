@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EpicPatientCase, PerioperativePhase, User } from '@/types/flow';
+import { EpicPatientCase, PerioperativePhase, User } from '@/types/journey';
 import { validateRoomTurnover } from '@/lib/turnoverValidation';
 import { 
   X, Check, AlertCircle, Clock, UserCheck, 

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Perfect Flow | Perioperative Patient Flow & OR Tracker',
+  title: 'Perfect Journey | Perioperative Patient Journey & OR Tracker',
   description: 'Enterprise clinical command center tracking patients seamlessly across Pre-Op, Intra-Op, PACU, and Phase II Recovery.',
   icons: {
     icon: '/favicon.ico',
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="whiteboard">
       <body>{children}</body>
     </html>
   );

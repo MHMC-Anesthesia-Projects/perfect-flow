@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EpicPatientCase } from '@/types/flow';
+import { EpicPatientCase } from '@/types/journey';
 import { BedDouble, Check, AlertCircle, Clock, CheckCircle2, UserCheck, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface PacuRecoveryViewProps {
@@ -9,15 +9,24 @@ interface PacuRecoveryViewProps {
   onSelectPatient: (patient: EpicPatientCase) => void;
   onUpdatePatient: (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => void;
   hipaaProtected: boolean;
+  subView?: 'all' | 'pacu' | 'phase2';
+  onSelectSubView?: (view: 'all' | 'pacu' | 'phase2') => void;
 }
 
 export const PacuRecoveryView: React.FC<PacuRecoveryViewProps> = ({
   patients,
   onSelectPatient,
   onUpdatePatient,
-  hipaaProtected
+  hipaaProtected,
+  subView: propSubView,
+  onSelectSubView: propOnSelectSubView
 }) => {
-  const [subView, setSubView] = useState<'all' | 'pacu' | 'phase2'>('all');
+  const [internalSubView, setInternalSubView] = useState<'all' | 'pacu' | 'phase2'>('all');
+  const subView = propSubView || internalSubView;
+  const setSubView = (val: 'all' | 'pacu' | 'phase2') => {
+    setInternalSubView(val);
+    if (propOnSelectSubView) propOnSelectSubView(val);
+  };
 
   // Patients in PACU or Phase II
   const allRecovery = patients.filter(p => p.currentPhase === 'pacu' || p.currentPhase === 'phase2');

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EpicPatientCase, OperatingRoom } from '@/types/flow';
+import { EpicPatientCase, OperatingRoom } from '@/types/journey';
 import { validateRoomTurnover } from '@/lib/turnoverValidation';
 import { X, Plus, AlertTriangle } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-import { EpicPatientCase } from '@/types/flow';
+import { EpicPatientCase } from '@/types/journey';
 
 export interface TurnoverValidationResult {
   hasConflict: boolean;

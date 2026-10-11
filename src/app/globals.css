@@ -166,6 +166,7 @@ html, body {
    TOP NAVIGATION BAR (Glassmorphism & Live Telemetry)
    ========================================================================== */
 
+.journey-header,
 .flow-header {
   position: sticky;
   top: 0;

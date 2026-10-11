@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { EpicPatientCase, PerioperativePhase } from '@/types/flow';
+import { EpicPatientCase, PerioperativePhase } from '@/types/journey';
 import { CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 interface BottomRibbonProps {
@@ -116,7 +116,7 @@ export const BottomRibbon: React.FC<BottomRibbonProps> = ({
         </button>
 
         <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-          PERFECT FLOW v1.0
+          PERFECT JOURNEY v1.0
         </div>
       </div>
     </footer>

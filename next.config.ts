@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '/flow',
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '/journey',
   allowedDevOrigins: [
     '192.168.86.84',
     '192.168.86.84:3000',

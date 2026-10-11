@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { EpicPatientCase, FlowState, OperatingRoom, PerioperativePhase, User, EmrApiConfig } from '@/types/flow';
-import { initialUsers, initialEmrConfig, getInitialFlowState } from '@/lib/mockData';
-import { getBrowserSupabase, FLOW_TABLE, FLOW_SCHEMA } from '@/lib/supabase';
+import { 
+  EpicPatientCase, JourneyState, OperatingRoom, 
+  PerioperativePhase, PerioperativeEnvironment, User, 
+  EmrApiConfig, Department, StaffMember, RoomStaffTeam 
+} from '@/types/journey';
+import { initialUsers, initialEmrConfig, initialDepartments, initialStaffRoster, getInitialJourneyState } from '@/lib/mockData';
+import { getBrowserSupabase, JOURNEY_TABLE, JOURNEY_SCHEMA } from '@/lib/supabase';
 import { HeaderNav } from '@/components/HeaderNav';
 import { BottomRibbon } from '@/components/BottomRibbon';
+import { SchedulingClearanceView } from '@/components/SchedulingClearanceView';
 import { RoomGridView } from '@/components/RoomGridView';
 import { OrStackedView } from '@/components/OrStackedView';
 import { TimelineGanttView } from '@/components/TimelineGanttView';
@@ -18,13 +23,28 @@ import { AdminModal } from '@/components/AdminModal';
 import { AuditDrawer } from '@/components/AuditDrawer';
 import { TouchscreenKeyboard } from '@/components/TouchscreenKeyboard';
 
-export default function PerfectFlowApp() {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/flow';
-  const [theme, setTheme] = useState<'whiteboard' | 'dark'>('dark');
-  const [flowState, setFlowState] = useState<FlowState>(getInitialFlowState());
+export default function PerfectJourneyApp() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/journey';
+  
+  // Always default to Whiteboard Light Mode per clinical requirement
+  const [theme, setTheme] = useState<'whiteboard' | 'dark'>('whiteboard');
+  const [journeyState, setJourneyState] = useState<JourneyState>(getInitialJourneyState());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [mainCategory, setMainCategory] = useState<'preop' | 'or' | 'recovery'>('or');
+  
+  // 5 discrete perioperative environments
+  const [activeEnvironment, setActiveEnvironment] = useState<PerioperativeEnvironment>('or');
+  
+  // Department selection ('dept-all' shows all departments)
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('dept-all');
+  
+  // Environment-specific sub-views
+  const [schedulingSubView, setSchedulingSubView] = useState<'matrix' | 'roster' | 'urgent'>('matrix');
+  const [preOpSubView, setPreOpSubView] = useState<'card' | 'table'>('card');
   const [orSubView, setOrSubView] = useState<'grid' | 'stacked' | 'timeline'>('grid');
+  const [pacuSubView, setPacuSubView] = useState<'all' | 'pacu' | 'phase2'>('all');
+  const [phase2SubView, setPhase2SubView] = useState<'recliners' | 'family' | 'discharge'>('recliners');
+
+  // Authentication & Active User
   const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]);
 
   const [hipaaProtected, setHipaaProtected] = useState<boolean>(false);
@@ -45,11 +65,11 @@ export default function PerfectFlowApp() {
     const fetchState = async () => {
       try {
         setIsSyncing(true);
-        const res = await fetch(`${basePath}/api/flow`);
+        const res = await fetch(`${basePath}/api/journey`);
         if (res.ok) {
           const data = await res.json();
           if (data?.patients?.length > 0) {
-            setFlowState(data);
+            setJourneyState(data);
           }
         }
       } catch (err) {
@@ -67,23 +87,23 @@ export default function PerfectFlowApp() {
     if (!supabase) return;
 
     const channel = supabase
-      .channel('flow-realtime-sync')
+      .channel('journey-realtime-sync')
       .on(
         'postgres_changes',
         {
           event: '*',
-          schema: FLOW_SCHEMA,
-          table: FLOW_TABLE
+          schema: JOURNEY_SCHEMA,
+          table: JOURNEY_TABLE
         },
         (payload: any) => {
           if (payload.new && payload.new.state_data) {
-            setFlowState(payload.new.state_data as FlowState);
+            setJourneyState(payload.new.state_data as JourneyState);
           }
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('[Supabase Realtime] Connected to live flow updates');
+          console.log('[Supabase Realtime] Connected to live journey updates');
         }
       });
 
@@ -92,6 +112,7 @@ export default function PerfectFlowApp() {
     };
   }, []);
 
+  // Enforce whiteboard light theme by default
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -107,26 +128,26 @@ export default function PerfectFlowApp() {
   const handleResetData = async () => {
     setIsSyncing(true);
     try {
-      const res = await fetch(`${basePath}/api/flow`, {
+      const res = await fetch(`${basePath}/api/journey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reset' })
       });
       if (res.ok) {
         const data = await res.json();
-        setFlowState(data.state);
+        setJourneyState(data.state);
       } else {
-        setFlowState(getInitialFlowState());
+        setJourneyState(getInitialJourneyState());
       }
     } catch {
-      setFlowState(getInitialFlowState());
+      setJourneyState(getInitialJourneyState());
     } finally {
       setIsSyncing(false);
     }
   };
 
   const handleUpdatePatient = async (patientId: string, updates: Partial<EpicPatientCase>, note?: string) => {
-    setFlowState(prev => {
+    setJourneyState(prev => {
       const pIdx = prev.patients.findIndex(p => p.id === patientId);
       if (pIdx === -1) return prev;
 
@@ -152,7 +173,7 @@ export default function PerfectFlowApp() {
     });
 
     try {
-      await fetch(`${basePath}/api/flow`, {
+      await fetch(`${basePath}/api/journey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +190,7 @@ export default function PerfectFlowApp() {
   };
 
   const handleAddPatient = async (newPatient: EpicPatientCase) => {
-    setFlowState(prev => ({
+    setJourneyState(prev => ({
       ...prev,
       patients: [newPatient, ...prev.patients],
       auditLogs: [
@@ -189,7 +210,7 @@ export default function PerfectFlowApp() {
     setSelectedPatientId(newPatient.id);
 
     try {
-      await fetch(`${basePath}/api/flow`, {
+      await fetch(`${basePath}/api/journey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,10 +224,62 @@ export default function PerfectFlowApp() {
     }
   };
 
-  const handleSaveUsers = async (updatedUsers: User[]) => {
-    setFlowState(prev => ({ ...prev, users: updatedUsers }));
+  const handleSaveDepartments = async (updatedDepartments: Department[]) => {
+    setJourneyState(prev => ({ ...prev, departments: updatedDepartments }));
     try {
-      await fetch(`${basePath}/api/flow`, {
+      await fetch(`${basePath}/api/journey`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveDepartments',
+          departments: updatedDepartments
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync departments:', err);
+    }
+  };
+
+  const handleSaveStaffRoster = async (updatedRoster: StaffMember[]) => {
+    setJourneyState(prev => ({ ...prev, staffRoster: updatedRoster }));
+    try {
+      await fetch(`${basePath}/api/journey`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveStaffRoster',
+          staffRoster: updatedRoster
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync staff roster:', err);
+    }
+  };
+
+  const handleUpdateRoomStaff = async (roomId: string, staff: RoomStaffTeam) => {
+    setJourneyState(prev => ({
+      ...prev,
+      rooms: prev.rooms.map(r => r.id === roomId ? { ...r, assignedStaff: staff } : r)
+    }));
+    try {
+      await fetch(`${basePath}/api/journey`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'updateRoomStaff',
+          roomId,
+          staff
+        })
+      });
+    } catch (err) {
+      console.error('Failed to sync room staff assignment:', err);
+    }
+  };
+
+  const handleSaveUsers = async (updatedUsers: User[]) => {
+    setJourneyState(prev => ({ ...prev, users: updatedUsers }));
+    try {
+      await fetch(`${basePath}/api/journey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,9 +293,9 @@ export default function PerfectFlowApp() {
   };
 
   const handleSaveEmrConfig = async (updatedConfig: EmrApiConfig) => {
-    setFlowState(prev => ({ ...prev, emrConfig: updatedConfig }));
+    setJourneyState(prev => ({ ...prev, emrConfig: updatedConfig }));
     try {
-      await fetch(`${basePath}/api/flow`, {
+      await fetch(`${basePath}/api/journey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -238,114 +311,141 @@ export default function PerfectFlowApp() {
   // Simulate an incoming emergency Add-On case directly from Epic OpTime HL7 interface
   const handleSimulateEpicCase = async () => {
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    const epicCaseId = `${Math.floor(1016800 + Math.random() * 2000)}`;
-
-    const epicSimulatedCase: EpicPatientCase = {
-      id: `pt-${epicCaseId}`,
-      epicCaseId,
-      mrn: `${Math.floor(151162000 + Math.random() * 9000)}`,
-      accountNumber: `1019814${Math.floor(5000 + Math.random() * 4000)}`,
-      patientName: 'Ramirez, Mateo',
-      patientInitials: 'RAM, M',
-      age: 38,
+    const mockEpicAddOn: EpicPatientCase = {
+      id: `pt-epic-${Date.now()}`,
+      epicCaseId: `${Math.floor(1000000 + Math.random() * 900000)}`,
+      mrn: `${Math.floor(100000000 + Math.random() * 900000000)}`,
+      accountNumber: `${Math.floor(10000000000 + Math.random() * 90000000000)}`,
+      patientName: 'VALDEZ, CARLOS ENRIQUE',
+      patientInitials: 'VAL, C',
+      age: 48,
       gender: 'M',
-      dob: '1988-04-12',
-      heightCm: 176,
-      weightKg: 81,
-      inpatientBed: 'Emergency Dept (Trauma Bay 2)',
+      dob: '1978-06-12',
+      heightCm: 178,
+      weightKg: 84.5,
+      inpatientBed: 'ED-TRAUMA-03',
       isConfidential: false,
-      roomNumber: 'MC OR 04',
-      caseOrder: 'Add-On',
-      primaryProcedure: 'INCISION AND DRAINAGE OF RIGHT THIGH ABSCESS WITH FASCIOTOMY',
-      procedureCodes: ['27301', '27305'],
+      roomNumber: 'MC OR 06',
+      caseOrder: 'A-1',
+      primaryProcedure: 'Laparoscopic Appendectomy (Urgent Inpatient Add-On)',
+      secondaryProcedure: 'Peritoneal Lavage',
+      procedureCodes: ['44970', '49084'],
       casePriority: 'emergent',
       isAddOn: true,
       addOnTime: timeNow,
-      addedBy: 'Epic OpTime HL7 Interface (Dr. Lee, K)',
+      addedBy: 'Epic OpTime Gateway (HL7 SIU-S12)',
       anesthesiaType: 'General',
-      comments: 'EMERGENT ADD-ON FROM ED - EPIC OPTIME HL7 EVENT',
-      surgeon: 'Lee, K',
-      anesthesiologist: 'Alaniz, P',
+      comments: 'Acute ruptured appendicitis transferred from ED Trauma Bay 3.',
+      surgeon: 'Patel, Sanjay (MD)',
+      anesthesiologist: 'Alaniz, P (MD)',
+      circulatorRN: 'Marybeth Q. (RN)',
+      scrubTech: 'Reyes, H. (CST)',
       currentPhase: 'preop',
       scheduledArrival: timeNow,
-      schedInRoom: '13:00',
-      schedCut: '13:30',
-      schedOutRoom: '15:00',
-      scheduledStartTime: '13:00',
-      scheduledEndTime: '15:00',
-      preOpBay: 'Holding Bay 06',
-      preOpReady: false,
+      schedInRoom: timeNow,
+      schedCut: timeNow,
+      schedOutRoom: '20:30',
+      scheduledStartTime: timeNow,
+      scheduledEndTime: '20:30',
+      preOpBay: 'Holding Bay 03',
+      preOpReady: true,
+      preOpReadyTime: timeNow,
       surgeonSeen: true,
       surgeonSeenTime: timeNow,
       hpComplete: 'yes',
       surgicalConsent: 'signed',
-      anesthesiaConsent: 'pending',
+      anesthesiaConsent: 'signed',
       siteMarked: 'yes',
-      anesthesiaReady: false,
+      anesthesiaReady: true,
+      anesthesiaReadyTime: timeNow,
       anesthesiaTechReady: true,
       blockStatus: 'not_needed',
-      reportCalled: false,
-      circPreopVisit: false,
+      reportCalled: true,
+      reportCalledTime: timeNow,
+      uptResult: 'na',
+      clipNeeded: 'no',
+      circPreopVisit: true,
       roomReady: true,
       bloodBankRequired: true,
+      pacuTransportComplete: false,
+      readyForAnesSignout: false,
+      pacuToFloorHold: false,
+      xrayOrdered: false,
+      ptOrdered: false,
       latexAllergy: false,
       infectionStatus: 'contact',
       defibPacemaker: false,
       anesthesiaTransport: true,
       preOpBypass: false,
-      erasPathway: false,
-      scopeEgd: false,
-      pacuTransportComplete: false,
-      readyForAnesSignout: false,
-      pacuToFloorHold: false,
-      xrayOrdered: false,
-      ptOrdered: false
+      erasPathway: true,
+      scopeEgd: false
     };
 
     try {
-      await fetch(`${basePath}/api/epic/sync`, {
+      const res = await fetch(`${basePath}/api/epic/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ epicCase: epicSimulatedCase })
+        body: JSON.stringify({ epicCase: mockEpicAddOn })
       });
-    } catch {
-      // offline fallback
+      if (res.ok) {
+        const data = await res.json();
+        if (data.state) {
+          setJourneyState(data.state);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to simulate Epic incoming payload:', err);
     }
-
-    setFlowState(prev => ({
-      ...prev,
-      patients: [epicSimulatedCase, ...prev.patients],
-      auditLogs: [
-        {
-          id: `epic-log-${Date.now()}`,
-          timestamp: timeNow,
-          user: 'Epic OpTime Gateway',
-          action: 'EPIC_CASE_INGEST',
-          patientId: epicSimulatedCase.id,
-          patientName: epicSimulatedCase.patientName,
-          details: `Simulated Epic OpTime HL7 Add-On Case #${epicSimulatedCase.epicCaseId} placed in MC OR 04`
-        },
-        ...prev.auditLogs
-      ]
-    }));
-
-    setSelectedPatientId(epicSimulatedCase.id);
   };
 
-  const filteredPatients = useMemo(() => {
-    let list = flowState.patients;
+  // Departments list from state or fallback
+  const departmentsList = journeyState.departments?.length > 0 
+    ? journeyState.departments 
+    : initialDepartments;
 
-    if (selectedPhaseFilter === 'add_on') {
-      list = list.filter(p => p.isAddOn);
-    } else if (selectedPhaseFilter !== null) {
-      list = list.filter(p => p.currentPhase === selectedPhaseFilter);
+  const staffRosterList = journeyState.staffRoster?.length > 0 
+    ? journeyState.staffRoster 
+    : initialStaffRoster;
+
+  const activeDeptObj = departmentsList.find(d => d.id === selectedDepartmentId);
+
+  // Filter rooms based on active department
+  const filteredRooms = useMemo(() => {
+    if (!selectedDepartmentId || selectedDepartmentId === 'dept-all' || !activeDeptObj) {
+      return journeyState.rooms;
+    }
+    return journeyState.rooms.filter(r => 
+      r.department.toLowerCase() === activeDeptObj.name.toLowerCase() ||
+      r.department.toLowerCase() === activeDeptObj.code.toLowerCase()
+    );
+  }, [journeyState.rooms, selectedDepartmentId, activeDeptObj]);
+
+  // Filter patients based on department, search, and bottom ribbon phase filter
+  const filteredPatients = useMemo(() => {
+    let list = journeyState.patients;
+
+    // Filter by department if specific department chosen
+    if (selectedDepartmentId && selectedDepartmentId !== 'dept-all' && activeDeptObj) {
+      const deptRoomNames = new Set(filteredRooms.map(r => r.name.toLowerCase()));
+      list = list.filter(p => {
+        if (!p.roomNumber) return true;
+        return deptRoomNames.has(p.roomNumber.toLowerCase()) || 
+               p.roomNumber.toLowerCase().includes(activeDeptObj.code.toLowerCase());
+      });
+    }
+
+    if (selectedPhaseFilter) {
+      if (selectedPhaseFilter === 'add_on') {
+        list = list.filter(p => p.isAddOn);
+      } else {
+        list = list.filter(p => p.currentPhase === selectedPhaseFilter);
+      }
     }
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       list = list.filter(p => 
         p.patientName.toLowerCase().includes(q) ||
-        p.patientInitials.toLowerCase().includes(q) ||
         p.surgeon.toLowerCase().includes(q) ||
         p.roomNumber.toLowerCase().includes(q) ||
         p.primaryProcedure.toLowerCase().includes(q) ||
@@ -355,12 +455,12 @@ export default function PerfectFlowApp() {
     }
 
     return list;
-  }, [flowState.patients, selectedPhaseFilter, searchQuery]);
+  }, [journeyState.patients, selectedDepartmentId, activeDeptObj, filteredRooms, selectedPhaseFilter, searchQuery]);
 
   const activeModalPatient = useMemo(() => {
     if (!selectedPatientId) return null;
-    return flowState.patients.find(p => p.id === selectedPatientId) || null;
-  }, [flowState.patients, selectedPatientId]);
+    return journeyState.patients.find(p => p.id === selectedPatientId) || null;
+  }, [journeyState.patients, selectedPatientId]);
 
   const handleVirtualKeyPress = (char: string) => {
     setSearchQuery(prev => prev + char);
@@ -374,36 +474,56 @@ export default function PerfectFlowApp() {
     setIsKeyboardOpen(false);
   };
 
-  const minTurnoverMinutes = flowState.emrConfig?.minTurnoverBufferMinutes || 15;
+  const minTurnoverMinutes = journeyState.emrConfig?.minTurnoverBufferMinutes || 15;
 
+  // 5 discrete environment live census counts
   const patientCounts = useMemo(() => {
     return {
-      preop: flowState.patients.filter(p => p.currentPhase === 'preop' || p.currentPhase === 'scheduled' || p.currentPhase === 'arrived').length,
-      or: flowState.patients.filter(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing').length,
-      recovery: flowState.patients.filter(p => p.currentPhase === 'pacu' || p.currentPhase === 'phase2').length
+      scheduling: journeyState.patients.filter(p => p.currentPhase === 'scheduled' || p.isAddOn).length,
+      preop: journeyState.patients.filter(p => p.currentPhase === 'preop' || p.currentPhase === 'arrived').length,
+      or: journeyState.patients.filter(p => p.currentPhase === 'in_surgery' || p.currentPhase === 'closing').length,
+      pacu: journeyState.patients.filter(p => p.currentPhase === 'pacu').length,
+      phase2: journeyState.patients.filter(p => p.currentPhase === 'phase2').length
     };
-  }, [flowState.patients]);
+  }, [journeyState.patients]);
 
   const handleSelectPhaseFilter = (filter: PerioperativePhase | 'add_on' | null) => {
     setSelectedPhaseFilter(filter);
-    if (filter === 'preop' || filter === 'scheduled') {
-      setMainCategory('preop');
+    if (filter === 'scheduled' || filter === 'add_on') {
+      setActiveEnvironment('scheduling');
+    } else if (filter === 'preop' || filter === 'arrived') {
+      setActiveEnvironment('preop');
     } else if (filter === 'in_surgery' || filter === 'closing') {
-      setMainCategory('or');
-    } else if (filter === 'pacu' || filter === 'phase2') {
-      setMainCategory('recovery');
+      setActiveEnvironment('or');
+    } else if (filter === 'pacu') {
+      setActiveEnvironment('pacu');
+    } else if (filter === 'phase2' || filter === 'completed') {
+      setActiveEnvironment('phase2');
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Top Application Header: Pre-Op, OR, Recovery */}
+      {/* Three-Tier Header: App Bar + 5-Stage Journey Continuum + Sub-View Controls */}
       <HeaderNav
-        currentCategory={mainCategory}
-        onSelectCategory={setMainCategory}
+        activeEnvironment={activeEnvironment}
+        onSelectEnvironment={setActiveEnvironment}
         patientCounts={patientCounts}
+        departments={departmentsList}
+        selectedDepartmentId={selectedDepartmentId}
+        onSelectDepartment={setSelectedDepartmentId}
         currentUser={currentUser}
         onOpenLogin={() => setIsPinModalOpen(true)}
+        schedulingSubView={schedulingSubView}
+        onSelectSchedulingSubView={setSchedulingSubView}
+        preOpSubView={preOpSubView}
+        onSelectPreOpSubView={setPreOpSubView}
+        orSubView={orSubView}
+        onSelectOrSubView={setOrSubView}
+        pacuSubView={pacuSubView}
+        onSelectPacuSubView={setPacuSubView}
+        phase2SubView={phase2SubView}
+        onSelectPhase2SubView={setPhase2SubView}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         hipaaProtected={hipaaProtected}
@@ -418,123 +538,169 @@ export default function PerfectFlowApp() {
         onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
-      {/* Main Location Content Display */}
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {/* 1. PRE-OP LOCATION */}
-        {mainCategory === 'preop' && (
+      {/* Main Continuous Journey Viewport */}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+        {/* 1. SCHEDULING & CLEARANCE ENVIRONMENT */}
+        {activeEnvironment === 'scheduling' && (
+          <SchedulingClearanceView
+            patients={filteredPatients}
+            rooms={filteredRooms}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            onUpdatePatient={handleUpdatePatient}
+            hipaaProtected={hipaaProtected}
+            selectedSubView={schedulingSubView}
+            onSelectSubView={setSchedulingSubView}
+          />
+        )}
+
+        {/* 2. PRE-OP / HOLDING ENVIRONMENT */}
+        {activeEnvironment === 'preop' && (
           <PreOpHoldingView
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
+            displayMode={preOpSubView}
+            onDisplayModeChange={setPreOpSubView}
           />
         )}
 
-        {/* 2. OR LOCATION: SUITE GRID */}
-        {mainCategory === 'or' && orSubView === 'grid' && (
+        {/* 3. INTRA-OP SUITES ENVIRONMENT: SUITE GRID */}
+        {activeEnvironment === 'or' && orSubView === 'grid' && (
           <RoomGridView
-            rooms={flowState.rooms}
+            rooms={filteredRooms}
             patients={filteredPatients}
-            runners={flowState.runners}
+            runners={journeyState.runners}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
             minTurnoverMinutes={minTurnoverMinutes}
             orSubView={orSubView}
             onSelectOrSubView={setOrSubView}
+            staffRoster={staffRosterList}
+            onUpdateRoomStaff={handleUpdateRoomStaff}
           />
         )}
 
-        {/* 2. OR LOCATION: CONSOLIDATED STACKED */}
-        {mainCategory === 'or' && orSubView === 'stacked' && (
+        {/* 3. INTRA-OP SUITES ENVIRONMENT: CONSOLIDATED STACKED */}
+        {activeEnvironment === 'or' && orSubView === 'stacked' && (
           <OrStackedView
-            rooms={flowState.rooms}
+            rooms={filteredRooms}
             patients={filteredPatients}
-            runners={flowState.runners}
+            runners={journeyState.runners}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
             minTurnoverMinutes={minTurnoverMinutes}
             orSubView={orSubView}
             onSelectOrSubView={setOrSubView}
+            staffRoster={staffRosterList}
+            onUpdateRoomStaff={handleUpdateRoomStaff}
           />
         )}
 
-        {/* 2. OR LOCATION: GANTT TIMELINE */}
-        {mainCategory === 'or' && orSubView === 'timeline' && (
+        {/* 3. INTRA-OP SUITES ENVIRONMENT: GANTT TIMELINE */}
+        {activeEnvironment === 'or' && orSubView === 'timeline' && (
           <TimelineGanttView
-            rooms={flowState.rooms}
+            rooms={filteredRooms}
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             hipaaProtected={hipaaProtected}
             minTurnoverMinutes={minTurnoverMinutes}
             orSubView={orSubView}
             onSelectOrSubView={setOrSubView}
+            staffRoster={staffRosterList}
+            onUpdateRoomStaff={handleUpdateRoomStaff}
           />
         )}
 
-        {/* 3. RECOVERY LOCATION */}
-        {mainCategory === 'recovery' && (
+        {/* 4. PACU PHASE I ENVIRONMENT */}
+        {activeEnvironment === 'pacu' && (
           <PacuRecoveryView
             patients={filteredPatients}
             onSelectPatient={(p) => setSelectedPatientId(p.id)}
             onUpdatePatient={handleUpdatePatient}
             hipaaProtected={hipaaProtected}
+            subView={pacuSubView}
+            onSelectSubView={setPacuSubView}
+          />
+        )}
+
+        {/* 5. PHASE II / DISCHARGE RECOVERY ENVIRONMENT */}
+        {activeEnvironment === 'phase2' && (
+          <PacuRecoveryView
+            patients={filteredPatients}
+            onSelectPatient={(p) => setSelectedPatientId(p.id)}
+            onUpdatePatient={handleUpdatePatient}
+            hipaaProtected={hipaaProtected}
+            subView={pacuSubView === 'pacu' ? 'phase2' : pacuSubView}
+            onSelectSubView={setPacuSubView}
           />
         )}
       </div>
 
       {/* Persistent Bottom Lifecycle Ribbon */}
       <BottomRibbon
-        patients={flowState.patients}
+        patients={journeyState.patients}
         selectedPhaseFilter={selectedPhaseFilter}
         onSelectPhaseFilter={handleSelectPhaseFilter}
         onOpenAudit={() => setIsAuditOpen(true)}
-        auditCount={flowState.auditLogs.length}
+        auditCount={journeyState.auditLogs.length}
       />
 
-      {/* Modals & Drawers */}
+      {/* Case Details Modal */}
       <ProcedureDetailModal
         patient={activeModalPatient}
         onClose={() => setSelectedPatientId(null)}
         onUpdatePatient={handleUpdatePatient}
         currentUser={currentUser}
         hipaaProtected={hipaaProtected}
-        allPatients={flowState.patients}
+        allPatients={journeyState.patients}
         minTurnoverMinutes={minTurnoverMinutes}
       />
 
+      {/* PIN & Password Dual Authentication Account Switcher Modal */}
       <PinPadModal
         isOpen={isPinModalOpen}
         onClose={() => setIsPinModalOpen(false)}
+        users={journeyState.users?.length > 0 ? journeyState.users : initialUsers}
+        currentUser={currentUser}
         onLogin={setCurrentUser}
       />
 
+      {/* Urgent Add-On Booking Modal */}
       <AddOnModal
         isOpen={isAddOnModalOpen}
         onClose={() => setIsAddOnModalOpen(false)}
-        rooms={flowState.rooms}
-        allPatients={flowState.patients}
+        rooms={journeyState.rooms}
+        allPatients={journeyState.patients}
         onAddPatient={handleAddPatient}
         minTurnoverMinutes={minTurnoverMinutes}
       />
 
+      {/* Admin Settings Modal: Departments, User Accounts & Roles, Site Staff Roster, EMR Gateway, Turnover */}
       <AdminModal
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}
-        users={flowState.users || initialUsers}
+        departments={departmentsList}
+        onSaveDepartments={handleSaveDepartments}
+        users={journeyState.users?.length > 0 ? journeyState.users : initialUsers}
         onSaveUsers={handleSaveUsers}
-        emrConfig={flowState.emrConfig || initialEmrConfig}
+        staffRoster={staffRosterList}
+        onSaveStaffRoster={handleSaveStaffRoster}
+        emrConfig={journeyState.emrConfig || initialEmrConfig}
         onSaveEmrConfig={handleSaveEmrConfig}
         onSimulateEpicCase={handleSimulateEpicCase}
       />
 
+      {/* Real-time Audit Trail Drawer */}
       <AuditDrawer
         isOpen={isAuditOpen}
         onClose={() => setIsAuditOpen(false)}
-        logs={flowState.auditLogs}
+        logs={journeyState.auditLogs}
       />
 
+      {/* Touchscreen Virtual Keyboard for 65" OR TV Kiosks */}
       <TouchscreenKeyboard
         isOpen={isKeyboardOpen}
         onClose={() => setIsKeyboardOpen(false)}
