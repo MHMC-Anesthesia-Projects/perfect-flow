@@ -504,7 +504,7 @@ export default function PerfectJourneyApp() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Three-Tier Header: App Bar + 5-Stage Journey Continuum + Sub-View Controls */}
+      {/* Header: App Bar + 5-Stage Journey Continuum */}
       <HeaderNav
         activeEnvironment={activeEnvironment}
         onSelectEnvironment={setActiveEnvironment}
@@ -514,16 +514,6 @@ export default function PerfectJourneyApp() {
         onSelectDepartment={setSelectedDepartmentId}
         currentUser={currentUser}
         onOpenLogin={() => setIsPinModalOpen(true)}
-        schedulingSubView={schedulingSubView}
-        onSelectSchedulingSubView={setSchedulingSubView}
-        preOpSubView={preOpSubView}
-        onSelectPreOpSubView={setPreOpSubView}
-        orSubView={orSubView}
-        onSelectOrSubView={setOrSubView}
-        pacuSubView={pacuSubView}
-        onSelectPacuSubView={setPacuSubView}
-        phase2SubView={phase2SubView}
-        onSelectPhase2SubView={setPhase2SubView}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         hipaaProtected={hipaaProtected}

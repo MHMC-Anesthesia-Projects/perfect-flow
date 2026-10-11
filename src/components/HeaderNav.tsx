@@ -5,10 +5,9 @@ import { User, Department, PerioperativeEnvironment } from '@/types/journey';
 import { 
   Sun, Moon, Shield, Lock, Clock, Search, 
   RotateCw, Eye, EyeOff, Keyboard, Maximize, 
-  Minimize, LayoutGrid, Layers, CalendarRange, 
-  Stethoscope, BedDouble, PlusCircle, Settings, ShieldCheck,
-  ChevronRight, Calendar, UserCheck, KeyRound, Building2,
-  FileText, Activity, AlertTriangle, Users, LogIn
+  Minimize, LayoutGrid, Stethoscope, BedDouble, 
+  PlusCircle, Settings, ShieldCheck, ChevronRight, 
+  Calendar, KeyRound, Building2, Activity
 } from 'lucide-react';
 
 export interface HeaderNavProps {
@@ -31,22 +30,6 @@ export interface HeaderNavProps {
   // Active User & Authentication (Tier 1 Login Button Top Right)
   currentUser: User;
   onOpenLogin: () => void;
-
-  // Sub-view selectors for each environment (Tier 3)
-  schedulingSubView: 'matrix' | 'roster' | 'urgent';
-  onSelectSchedulingSubView: (view: 'matrix' | 'roster' | 'urgent') => void;
-
-  preOpSubView: 'card' | 'table';
-  onSelectPreOpSubView: (view: 'card' | 'table') => void;
-
-  orSubView: 'grid' | 'stacked' | 'timeline';
-  onSelectOrSubView: (view: 'grid' | 'stacked' | 'timeline') => void;
-
-  pacuSubView: 'all' | 'pacu' | 'phase2';
-  onSelectPacuSubView: (view: 'all' | 'pacu' | 'phase2') => void;
-
-  phase2SubView?: 'recliners' | 'family' | 'discharge';
-  onSelectPhase2SubView?: (view: 'recliners' | 'family' | 'discharge') => void;
 
   // Utilities
   theme: 'whiteboard' | 'dark';
@@ -72,16 +55,6 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   onSelectDepartment,
   currentUser,
   onOpenLogin,
-  schedulingSubView,
-  onSelectSchedulingSubView,
-  preOpSubView,
-  onSelectPreOpSubView,
-  orSubView,
-  onSelectOrSubView,
-  pacuSubView,
-  onSelectPacuSubView,
-  phase2SubView = 'recliners',
-  onSelectPhase2SubView,
   theme,
   onToggleTheme,
   hipaaProtected,
@@ -409,8 +382,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: 'var(--bg-board)',
-        borderBottom: '1px solid var(--border-light)'
+        background: 'var(--bg-board)'
       }}>
         {/* Continuous Flow Pipeline */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -591,268 +563,6 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
               {patientCounts.phase2}
             </span>
           </button>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          TIER 3: CONTEXTUAL SUB-BAR (Environment-Specific View Modes)
-          ========================================================================= */}
-      <div style={{
-        height: 38,
-        padding: '0 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'var(--surface-subtle)',
-        borderBottom: '1px solid var(--border-light)',
-        fontSize: 12
-      }}>
-        {/* Left: Environment description & active stage tag */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.4px' }}>
-            {activeEnvironment === 'scheduling' && '📋 Stage 1 • Preadmission Clearance & Scheduling'}
-            {activeEnvironment === 'preop' && '🛏️ Stage 2 • Pre-Op Preparation & Holding Verification'}
-            {activeEnvironment === 'or' && '🏥 Stage 3 • Surgical Suite Progression & Staff Tracking'}
-            {activeEnvironment === 'pacu' && '🩺 Stage 4 • Post-Anesthesia Recovery & Sign-Outs'}
-            {activeEnvironment === 'phase2' && '🚶 Stage 5 • Ambulatory Step-Down & Patient Discharge'}
-          </span>
-        </div>
-
-        {/* Right: Layout Switchers Contextual to Active Environment */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {/* Sub-views for 1. SCHEDULING */}
-          {activeEnvironment === 'scheduling' && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                type="button"
-                onClick={() => onSelectSchedulingSubView('matrix')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: schedulingSubView === 'matrix' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: schedulingSubView === 'matrix' ? 'var(--surface-card)' : 'transparent',
-                  color: schedulingSubView === 'matrix' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: schedulingSubView === 'matrix' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Clearance & PAT Matrix
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectSchedulingSubView('roster')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: schedulingSubView === 'roster' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: schedulingSubView === 'roster' ? 'var(--surface-card)' : 'transparent',
-                  color: schedulingSubView === 'roster' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: schedulingSubView === 'roster' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Master Schedule Roster
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectSchedulingSubView('urgent')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: schedulingSubView === 'urgent' ? '1px solid var(--alert-red)' : '1px solid var(--border-light)',
-                  background: schedulingSubView === 'urgent' ? 'rgba(220, 38, 38, 0.1)' : 'transparent',
-                  color: schedulingSubView === 'urgent' ? 'var(--alert-red)' : 'var(--text-secondary)',
-                  fontWeight: schedulingSubView === 'urgent' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                🚨 Urgent Add-On Queue
-              </button>
-            </div>
-          )}
-
-          {/* Sub-views for 2. PRE-OP */}
-          {activeEnvironment === 'preop' && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                type="button"
-                onClick={() => onSelectPreOpSubView('card')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: preOpSubView === 'card' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: preOpSubView === 'card' ? 'var(--surface-card)' : 'transparent',
-                  color: preOpSubView === 'card' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: preOpSubView === 'card' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Pre-Op Bay Grid
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectPreOpSubView('table')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: preOpSubView === 'table' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: preOpSubView === 'table' ? 'var(--surface-card)' : 'transparent',
-                  color: preOpSubView === 'table' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: preOpSubView === 'table' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Prep Worklist Table
-              </button>
-            </div>
-          )}
-
-          {/* Sub-views for 3. OR SUITES */}
-          {activeEnvironment === 'or' && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                type="button"
-                onClick={() => onSelectOrSubView('grid')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: orSubView === 'grid' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: orSubView === 'grid' ? 'var(--surface-card)' : 'transparent',
-                  color: orSubView === 'grid' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: orSubView === 'grid' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
-              >
-                <LayoutGrid size={12} />
-                <span>OR Suite Grid</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectOrSubView('stacked')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: orSubView === 'stacked' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: orSubView === 'stacked' ? 'var(--surface-card)' : 'transparent',
-                  color: orSubView === 'stacked' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: orSubView === 'stacked' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
-              >
-                <Layers size={12} />
-                <span>Stacked Rooms</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectOrSubView('timeline')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: orSubView === 'timeline' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: orSubView === 'timeline' ? 'var(--surface-card)' : 'transparent',
-                  color: orSubView === 'timeline' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: orSubView === 'timeline' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
-              >
-                <CalendarRange size={12} />
-                <span>Timeline Gantt</span>
-              </button>
-            </div>
-          )}
-
-          {/* Sub-views for 4. PACU PHASE I */}
-          {activeEnvironment === 'pacu' && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                type="button"
-                onClick={() => onSelectPacuSubView('pacu')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: pacuSubView === 'pacu' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: pacuSubView === 'pacu' ? 'var(--surface-card)' : 'transparent',
-                  color: pacuSubView === 'pacu' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: pacuSubView === 'pacu' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                PACU Phase I Only
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectPacuSubView('all')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: pacuSubView === 'all' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: pacuSubView === 'all' ? 'var(--surface-card)' : 'transparent',
-                  color: pacuSubView === 'all' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: pacuSubView === 'all' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                All Recovery
-              </button>
-            </div>
-          )}
-
-          {/* Sub-views for 5. PHASE II / DISCHARGE */}
-          {activeEnvironment === 'phase2' && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                type="button"
-                onClick={() => onSelectPacuSubView('phase2')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: pacuSubView === 'phase2' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: pacuSubView === 'phase2' ? 'var(--surface-card)' : 'transparent',
-                  color: pacuSubView === 'phase2' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: pacuSubView === 'phase2' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Phase II Ambulatory Step-Down
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectPacuSubView('all')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: pacuSubView === 'all' ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
-                  background: pacuSubView === 'all' ? 'var(--surface-card)' : 'transparent',
-                  color: pacuSubView === 'all' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: pacuSubView === 'all' ? 800 : 500,
-                  fontSize: 11,
-                  cursor: 'pointer'
-                }}
-              >
-                Combined Recovery View
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
