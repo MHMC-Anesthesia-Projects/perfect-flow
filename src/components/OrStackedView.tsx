@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { EpicPatientCase, OperatingRoom, BoardRunner, StaffMember, RoomStaffTeam } from '@/types/journey';
 import { parseTimeToMinutes } from '@/lib/turnoverValidation';
-import { Plus, LayoutGrid, Layers, Activity, Filter, Clock, CalendarRange } from 'lucide-react';
+import { Plus, LayoutGrid, Layers, Filter, Clock, CalendarRange } from 'lucide-react';
 import { StaffPickerModal } from './StaffPickerModal';
 
 interface OrStackedViewProps {
@@ -41,7 +41,6 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
     roleLabel: string;
     currentStaffName: string;
   } | null>(null);
-  const [selectedDept, setSelectedDept] = useState<'Day Surgery' | 'Main OR' | 'all'>('Day Surgery');
 
   const getElapsedMinutes = (startTimeStr?: string) => {
     if (!startTimeStr) return null;
@@ -57,11 +56,8 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
     return diffMins > 0 ? diffMins : 0;
   };
 
-  // Filter rooms according to department tab
-  const filteredRooms = rooms.filter(room => {
-    if (selectedDept === 'all') return true;
-    return room.department === selectedDept;
-  });
+  // Rooms are already filtered by the main application header's department switcher
+  const filteredRooms = rooms;
 
   return (
     <div style={{
@@ -91,7 +87,7 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
           flexWrap: 'wrap',
           gap: 12
         }}>
-          {/* Board Runners Telemetry & Green Narcotic Banner */}
+          {/* Board Runners Telemetry */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <div style={{
               fontSize: 16,
@@ -102,92 +98,10 @@ export const OrStackedView: React.FC<OrStackedViewProps> = ({
             }}>
               Board Runners; Anes x3346, Anes x4342; RN x3935
             </div>
-
-            {/* Green Narcotic Banner from Image */}
-            <div style={{
-              background: '#16a34a',
-              color: '#ffffff',
-              padding: '5px 14px',
-              borderRadius: 4,
-              fontSize: 12,
-              fontWeight: 900,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 2px 4px rgba(22, 163, 74, 0.25)'
-            }}>
-              <Activity size={15} />
-              <span>NARCOTIC COUNTS DUE BY 1200 07:00 - 12:00</span>
-            </div>
           </div>
 
-          {/* Department Filter & View Switcher */}
+          {/* View Switcher Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Department Filter Tabs */}
-            <div style={{
-              display: 'flex',
-              background: 'var(--surface-subtle)',
-              border: '1px solid var(--border-medium)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 2,
-              gap: 2
-            }}>
-              <button
-                type="button"
-                onClick={() => setSelectedDept('Day Surgery')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: selectedDept === 'Day Surgery' ? 'var(--accent-primary)' : 'transparent',
-                  color: selectedDept === 'Day Surgery' ? '#ffffff' : 'var(--text-secondary)',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                Day Surgery (MC DS)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedDept('Main OR')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: selectedDept === 'Main OR' ? 'var(--accent-primary)' : 'transparent',
-                  color: selectedDept === 'Main OR' ? '#ffffff' : 'var(--text-secondary)',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                Main OR (MC OR)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedDept('all')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: selectedDept === 'all' ? 'var(--accent-primary)' : 'transparent',
-                  color: selectedDept === 'all' ? '#ffffff' : 'var(--text-secondary)',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                All Operating Suites
-              </button>
-            </div>
 
             {/* View Switcher Toggle */}
             <div style={{
