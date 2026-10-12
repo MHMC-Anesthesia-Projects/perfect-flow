@@ -90,17 +90,37 @@ export interface EmrApiConfig {
 export interface ClearanceStatus {
   labsCleared: boolean;
   labsNotes?: string;
+  labsNote?: string;
   ekgCleared: boolean;
   ekgNotes?: string;
+  ekgNote?: string;
+  ekgStatus?: 'normal' | 'abnormal' | 'pending' | 'na';
+  ekgDate?: string;
   cardiacCleared: boolean;
   cardiacNotes?: string;
+  cardiologyClearance?: 'cleared' | 'needed' | 'pending' | 'na';
+  cardiologyNote?: string;
+  stressTestDate?: string;
+  anticoagulationPlan?: string;
+  typeAndScreen?: 'valid' | 'expired' | 'needed' | 'na';
+  unitsCrossmatched?: number;
+  implantsConfirmed?: boolean;
+  implantsNote?: string;
+  preOpInstructionsSent?: boolean;
+  anesthesiaClearance?: 'cleared' | 'pending' | 'review_required';
   hpInChart: boolean;
+  hpDate?: string;
   consentsOnFile: boolean;
   implantsVerified: boolean;
   specialSuppliesNotes?: string;
+  npoStatus?: string;
+  patClinicStatus?: 'completed' | 'pending' | 'waived';
+  patNotes?: string;
+  asaClass?: 'ASA I' | 'ASA II' | 'ASA III' | 'ASA IV' | 'ASA V' | 'ASA E';
 }
 
 export interface EpicPatientCase {
+  clearanceStatus?: ClearanceStatus;
   id: string; // Internal UUID
   epicCaseId: string; // e.g. "1015987"
   mrn: string; // e.g. "151159090"

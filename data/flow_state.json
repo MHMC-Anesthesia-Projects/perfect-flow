@@ -1,7 +1,526 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-10-11T19:35:02.283Z",
+  "lastUpdated": "2026-10-12T00:36:27.546Z",
+  "departments": [
+    {
+      "id": "dept-all",
+      "name": "All Departments",
+      "code": "ALL",
+      "description": "System-wide health facility census",
+      "active": true,
+      "displayOrder": 0
+    },
+    {
+      "id": "dept-main",
+      "name": "Main OR",
+      "code": "MAIN_OR",
+      "description": "Inpatient surgical suites (Suites 01-08)",
+      "active": true,
+      "displayOrder": 1
+    },
+    {
+      "id": "dept-ds",
+      "name": "Day Surgery",
+      "code": "DAY_SURG",
+      "description": "Ambulatory surgery pavilion (Suites DS 01-05)",
+      "active": true,
+      "displayOrder": 2
+    },
+    {
+      "id": "dept-ortho",
+      "name": "Ortho OR",
+      "code": "ORTHO",
+      "description": "Specialized orthopedic & joint reconstruction suites",
+      "active": true,
+      "displayOrder": 3
+    },
+    {
+      "id": "dept-endo",
+      "name": "Endo",
+      "code": "ENDO",
+      "description": "Endoscopy & GI procedural suites",
+      "active": true,
+      "displayOrder": 4
+    },
+    {
+      "id": "dept-cv",
+      "name": "CV Heart & Vascular",
+      "code": "CV",
+      "description": "Cardiovascular suites & hybrid cath labs",
+      "active": true,
+      "displayOrder": 5
+    }
+  ],
+  "staffRoster": [
+    {
+      "id": "staff-1",
+      "staffName": "Peter Alaniz, MD",
+      "displayName": "Alaniz, P (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Main OR",
+      "cell": "x5501 / (713) 555-0101",
+      "active": true
+    },
+    {
+      "id": "staff-2",
+      "staffName": "Eric Jones, MD",
+      "displayName": "Jones, E (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Day Surgery",
+      "cell": "x5502 / (713) 555-0102",
+      "active": true
+    },
+    {
+      "id": "staff-3",
+      "staffName": "Caroline Prichard, MD",
+      "displayName": "Prichard, C (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Day Surgery",
+      "cell": "x5503 / (713) 555-0103",
+      "active": true
+    },
+    {
+      "id": "staff-4",
+      "staffName": "Francis Gelpi-Hammond, MD",
+      "displayName": "Gelpi-Hammond, F (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Day Surgery",
+      "cell": "x5504 / (713) 555-0104",
+      "active": true
+    },
+    {
+      "id": "staff-5",
+      "staffName": "David Chen, MD",
+      "displayName": "Chen, D (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Main OR",
+      "cell": "x5505 / (713) 555-0105",
+      "active": true
+    },
+    {
+      "id": "staff-6",
+      "staffName": "Ricardo Perez, MD",
+      "displayName": "Perez, R (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Main OR",
+      "cell": "x5506 / (713) 555-0106",
+      "active": true
+    },
+    {
+      "id": "staff-7",
+      "staffName": "Sanjay Patel, MD",
+      "displayName": "Patel, S (MD)",
+      "role": "Anesthesiologist",
+      "environmentHome": "Main OR",
+      "cell": "x5507 / (713) 555-0107",
+      "active": true
+    },
+    {
+      "id": "staff-10",
+      "staffName": "Katie Taylor, CRNA",
+      "displayName": "Taylor, K. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Day Surgery",
+      "cell": "x5511 / (713) 555-0111",
+      "active": true
+    },
+    {
+      "id": "staff-11",
+      "staffName": "Erica Brown, CRNA",
+      "displayName": "Erica B. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Day Surgery",
+      "cell": "x5512 / (713) 555-0112",
+      "active": true
+    },
+    {
+      "id": "staff-12",
+      "staffName": "Marcus Jackson, CRNA",
+      "displayName": "Marcus J. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Day Surgery",
+      "cell": "x5513 / (713) 555-0113",
+      "active": true
+    },
+    {
+      "id": "staff-13",
+      "staffName": "Indy Bell, CRNA",
+      "displayName": "Indy B. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Main OR",
+      "cell": "x5514 / (713) 555-0114",
+      "active": true
+    },
+    {
+      "id": "staff-14",
+      "staffName": "Michael Vargas, CRNA",
+      "displayName": "Vargas, M. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Main OR",
+      "cell": "x5515 / (713) 555-0115",
+      "active": true
+    },
+    {
+      "id": "staff-15",
+      "staffName": "Deanna Miller, CRNA",
+      "displayName": "Miller, D. (CRNA)",
+      "role": "CRNA",
+      "environmentHome": "Main OR",
+      "cell": "x5516 / (713) 555-0116",
+      "active": true
+    },
+    {
+      "id": "staff-20",
+      "staffName": "Holly Wright, RN",
+      "displayName": "Holly W. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Day Surgery",
+      "cell": "x5521 / (713) 555-0121",
+      "active": true
+    },
+    {
+      "id": "staff-21",
+      "staffName": "Kashish Mehta, RN",
+      "displayName": "Kashish M. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Day Surgery",
+      "cell": "x5522 / (713) 555-0122",
+      "active": true
+    },
+    {
+      "id": "staff-22",
+      "staffName": "Arlene Santos, RN",
+      "displayName": "Arlene S. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Day Surgery",
+      "cell": "x5523 / (713) 555-0123",
+      "active": true
+    },
+    {
+      "id": "staff-23",
+      "staffName": "Jennifer Wilson, RN",
+      "displayName": "Jennifer W. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Main OR",
+      "cell": "x5524 / (713) 555-0124",
+      "active": true
+    },
+    {
+      "id": "staff-24",
+      "staffName": "Marybeth Quinn, RN",
+      "displayName": "Marybeth Q. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Main OR",
+      "cell": "x5525 / (713) 555-0125",
+      "active": true
+    },
+    {
+      "id": "staff-25",
+      "staffName": "Sarah Thompson, RN",
+      "displayName": "Sarah T. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Main OR",
+      "cell": "x5526 / (713) 555-0126",
+      "active": true
+    },
+    {
+      "id": "staff-26",
+      "staffName": "Veronica Nguyen, RN",
+      "displayName": "Veronica N. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Main OR",
+      "cell": "x5527 / (713) 555-0127",
+      "active": true
+    },
+    {
+      "id": "staff-27",
+      "staffName": "Tanya Jackson, RN",
+      "displayName": "Jackson, T. (RN)",
+      "role": "Circulator RN",
+      "environmentHome": "Main OR",
+      "cell": "x5528 / (713) 555-0128",
+      "active": true
+    },
+    {
+      "id": "staff-30",
+      "staffName": "Stephanie Gomez, CST",
+      "displayName": "Stephanie (ST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Day Surgery",
+      "cell": "x5531 / (713) 555-0131",
+      "active": true
+    },
+    {
+      "id": "staff-31",
+      "staffName": "Candace Smith, CST",
+      "displayName": "Candace S. (ST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Day Surgery",
+      "cell": "x5532 / (713) 555-0132",
+      "active": true
+    },
+    {
+      "id": "staff-32",
+      "staffName": "Nathalie Simon, CST",
+      "displayName": "Nathalie S. (ST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Day Surgery",
+      "cell": "x5533 / (713) 555-0133",
+      "active": true
+    },
+    {
+      "id": "staff-33",
+      "staffName": "David Liu, CST",
+      "displayName": "David L. (ST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Main OR",
+      "cell": "x5534 / (713) 555-0134",
+      "active": true
+    },
+    {
+      "id": "staff-34",
+      "staffName": "Kenji Mori, CST",
+      "displayName": "Kenji M. (ST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Main OR",
+      "cell": "x5535 / (713) 555-0135",
+      "active": true
+    },
+    {
+      "id": "staff-35",
+      "staffName": "Hector Reyes, CST",
+      "displayName": "Reyes, H. (CST)",
+      "role": "Scrub Tech",
+      "environmentHome": "Main OR",
+      "cell": "x5536 / (713) 555-0136",
+      "active": true
+    },
+    {
+      "id": "staff-40",
+      "staffName": "Sam Rodriguez, AT",
+      "displayName": "Sam R. (AT)",
+      "role": "Anes Tech",
+      "environmentHome": "Main OR",
+      "cell": "x5541 / (713) 555-0141",
+      "active": true
+    },
+    {
+      "id": "staff-41",
+      "staffName": "Carlos Gonzalez, AT",
+      "displayName": "Carlos G. (AT)",
+      "role": "Anes Tech",
+      "environmentHome": "Day Surgery",
+      "cell": "x5542 / (713) 555-0142",
+      "active": true
+    },
+    {
+      "id": "staff-50",
+      "staffName": "Rachel Martinez, RN",
+      "displayName": "Rachel M. (RN)",
+      "role": "Pre-Op RN",
+      "environmentHome": "Pre-Op Holding",
+      "cell": "x5551 / (713) 555-0151",
+      "active": true
+    },
+    {
+      "id": "staff-51",
+      "staffName": "Kevin Tran, RN",
+      "displayName": "Kevin T. (RN)",
+      "role": "Pre-Op RN",
+      "environmentHome": "Pre-Op Holding",
+      "cell": "x5552 / (713) 555-0152",
+      "active": true
+    },
+    {
+      "id": "staff-52",
+      "staffName": "Brenda Hayes, RN",
+      "displayName": "Brenda H. (RN)",
+      "role": "PACU RN",
+      "environmentHome": "PACU",
+      "cell": "x5553 / (713) 555-0153",
+      "active": true
+    },
+    {
+      "id": "staff-53",
+      "staffName": "Lisa Cooper, RN",
+      "displayName": "Lisa C. (RN)",
+      "role": "PACU RN",
+      "environmentHome": "PACU",
+      "cell": "x5554 / (713) 555-0154",
+      "active": true
+    }
+  ],
   "patients": [
+    {
+      "id": "pt-sched-01",
+      "epicCaseId": "1029481",
+      "mrn": "984120941",
+      "accountNumber": "10198410291",
+      "patientName": "MONTGOMERY, ELEANOR GRACE",
+      "patientInitials": "MON, E",
+      "age": 67,
+      "gender": "F",
+      "dob": "1959-04-18",
+      "heightCm": 165,
+      "weightKg": 72,
+      "inpatientBed": "Outpatient / PAT Clinic",
+      "isConfidential": false,
+      "department": "Main OR",
+      "roomNumber": "MC OR 03",
+      "caseOrder": "1",
+      "primaryProcedure": "Total Hip Arthroplasty (Right Anterior Approach)",
+      "secondaryProcedure": "Fluoroscopic Guidance for Joint Navigation",
+      "procedureCodes": [
+        "27130",
+        "77002"
+      ],
+      "casePriority": "elective",
+      "isAddOn": false,
+      "anesthesiaType": "Spinal",
+      "surgeon": "West, David (MD - Joint Reconstruction)",
+      "anesthesiologist": "Alaniz, Peter (MD)",
+      "currentPhase": "scheduled",
+      "scheduledArrival": "06:15",
+      "schedInRoom": "07:30",
+      "schedCut": "08:00",
+      "schedOutRoom": "10:00",
+      "scheduledStartTime": "07:30",
+      "scheduledEndTime": "10:00",
+      "preOpReady": false,
+      "surgeonSeen": false,
+      "hpComplete": "yes",
+      "surgicalConsent": "signed",
+      "anesthesiaConsent": "signed",
+      "siteMarked": "pending",
+      "anesthesiaReady": true,
+      "anesthesiaTechReady": false,
+      "blockStatus": "ordered",
+      "blockType": "PENG & Lateral Femoral Cutaneous Block for Post-Op Analgesia",
+      "reportCalled": false,
+      "circPreopVisit": false,
+      "roomReady": false,
+      "bloodBankRequired": true,
+      "latexAllergy": false,
+      "infectionStatus": "none",
+      "defibPacemaker": false,
+      "anesthesiaTransport": false,
+      "preOpBypass": false,
+      "erasPathway": true,
+      "scopeEgd": false,
+      "pacuTransportComplete": false,
+      "readyForAnesSignout": false,
+      "pacuToFloorHold": false,
+      "xrayOrdered": false,
+      "ptOrdered": false,
+      "clearance": {
+        "labsCleared": true,
+        "labsNotes": "Type & Screen on hold (valid 72h). CBC normal (Hgb 13.8), BMP normal (Cr 0.8), PT/INR 1.0 (Coumadin held 5d per cardiology).",
+        "ekgCleared": true,
+        "ekgNotes": "NSR at 68 bpm. PR 160ms, QTc 418ms. No acute ischemic ST-T changes. (PAT Clinic 2026-10-04)",
+        "cardiacCleared": true,
+        "cardiacNotes": "Cardiology Clearance Letter on file from Dr. Robert Vance: History of CAD with DES stent (2024), Plavix held 7 days, LVEF 55%, low perioperative risk with spinal.",
+        "hpInChart": true,
+        "hpDate": "2026-10-05",
+        "consentsOnFile": true,
+        "implantsVerified": true,
+        "specialSuppliesNotes": "DePuy Actis stem & Pinnacle cup size 50-54 verified on site. Rep John S. confirmed delivery.",
+        "npoStatus": "NPO since midnight, sip of water with beta blocker at 05:00",
+        "patClinicStatus": "completed",
+        "patNotes": "PAT nurse visit completed 10/05. Hibiclens wash instructions given, ride home confirmed.",
+        "asaClass": "ASA III"
+      },
+      "comments": "PAT clinic phone evaluation completed. Patient instructed on NPO midnight, shower with Hibiclens tonight & morning of surgery.",
+      "specialNeeds": "Left shoulder arthritis (caution with positioning), CPAP machine brought from home",
+      "familyCommunication": {
+        "primaryName": "Montgomery, Charles (Spouse)",
+        "primaryPhone": "(713) 555-0188",
+        "primaryNotes": "Will accompany patient to Day Surgery Pavilion entrance at 06:15",
+        "prefersPhoneCall": true
+      }
+    },
+    {
+      "id": "pt-sched-02",
+      "epicCaseId": "1029482",
+      "mrn": "984120942",
+      "accountNumber": "10198410292",
+      "patientName": "HARRINGTON, ROBERT JAMES",
+      "patientInitials": "HAR, R",
+      "age": 54,
+      "gender": "M",
+      "dob": "1972-08-22",
+      "heightCm": 182,
+      "weightKg": 98.4,
+      "inpatientBed": "Outpatient / Day Surgery",
+      "isConfidential": false,
+      "department": "Day Surgery",
+      "roomNumber": "MC DS 02",
+      "caseOrder": "2",
+      "primaryProcedure": "Laparoscopic Inguinal Hernia Repair (Bilateral mesh)",
+      "procedureCodes": [
+        "49585"
+      ],
+      "casePriority": "elective",
+      "isAddOn": false,
+      "anesthesiaType": "General",
+      "surgeon": "Prichard, Caroline (MD)",
+      "anesthesiologist": "Jones, Eric (MD)",
+      "currentPhase": "scheduled",
+      "scheduledArrival": "09:00",
+      "schedInRoom": "10:30",
+      "schedCut": "11:00",
+      "schedOutRoom": "12:30",
+      "scheduledStartTime": "10:30",
+      "scheduledEndTime": "12:30",
+      "preOpReady": false,
+      "surgeonSeen": false,
+      "hpComplete": "yes",
+      "surgicalConsent": "pending",
+      "anesthesiaConsent": "pending",
+      "siteMarked": "pending",
+      "anesthesiaReady": false,
+      "anesthesiaTechReady": false,
+      "blockStatus": "ordered",
+      "blockType": "TAP Block (Transversus Abdominis Plane) ultrasound guided",
+      "reportCalled": false,
+      "circPreopVisit": false,
+      "roomReady": false,
+      "bloodBankRequired": false,
+      "latexAllergy": false,
+      "infectionStatus": "none",
+      "defibPacemaker": false,
+      "anesthesiaTransport": false,
+      "preOpBypass": false,
+      "erasPathway": false,
+      "scopeEgd": false,
+      "pacuTransportComplete": false,
+      "readyForAnesSignout": false,
+      "pacuToFloorHold": false,
+      "xrayOrdered": false,
+      "ptOrdered": false,
+      "clearance": {
+        "labsCleared": true,
+        "labsNotes": "BMP & CBC completed at outpatient lab. Potassium 4.2, WBC 6.8.",
+        "ekgCleared": false,
+        "ekgNotes": "Pending 12-lead EKG tracing from PCP office (fax requested today at 14:00).",
+        "cardiacCleared": true,
+        "cardiacNotes": "METS > 4 without angina or dyspnea.",
+        "hpInChart": true,
+        "hpDate": "2026-10-08",
+        "consentsOnFile": false,
+        "implantsVerified": true,
+        "specialSuppliesNotes": "Bard 3DMax mesh light size medium stocked.",
+        "npoStatus": "NPO from 02:00 morning of surgery",
+        "patClinicStatus": "pending",
+        "patNotes": "Awaiting EKG fax and signed surgical consent from surgeon clinic.",
+        "asaClass": "ASA II"
+      },
+      "comments": "PAT nurse called patient: NPO instructions reviewed, awaiting signed surgical consent and EKG fax.",
+      "familyCommunication": {
+        "primaryName": "Harrington, Susan (Wife)",
+        "primaryPhone": "(713) 555-0219",
+        "prefersPhoneCall": true
+      }
+    },
     {
       "id": "pt-ds01-1",
       "epicCaseId": "966869",
@@ -504,8 +1023,7 @@
       "readyForAnesSignout": false,
       "pacuToFloorHold": false,
       "xrayOrdered": false,
-      "ptOrdered": false,
-      "reportCalledTime": "21:03"
+      "ptOrdered": false
     },
     {
       "id": "pt-ds03-3",
@@ -1412,8 +1930,8 @@
       "scheduledStartTime": "11:30",
       "scheduledEndTime": "13:45",
       "delayReason": "Awaiting Surgeon arrival for mandatory surgical site mark and updated H&P",
-      "preOpReady": true,
-      "surgeonSeen": true,
+      "preOpReady": false,
+      "surgeonSeen": false,
       "hpComplete": "pending",
       "surgicalConsent": "signed",
       "anesthesiaConsent": "signed",
@@ -1441,10 +1959,7 @@
       "readyForAnesSignout": false,
       "pacuToFloorHold": false,
       "xrayOrdered": false,
-      "ptOrdered": false,
-      "reportCalledTime": "21:04",
-      "surgeonSeenTime": "21:04",
-      "preOpReadyTime": "21:04"
+      "ptOrdered": false
     },
     {
       "id": "pt-1016412",
@@ -1477,10 +1992,10 @@
       "preOpBay": "Bay 03",
       "currentPhase": "preop",
       "scheduledArrival": "10:30",
-      "schedInRoom": "11:00",
+      "schedInRoom": "12:00",
       "schedCut": "12:30",
       "schedOutRoom": "14:30",
-      "scheduledStartTime": "11:00",
+      "scheduledStartTime": "12:00",
       "scheduledEndTime": "14:30",
       "preOpReady": true,
       "preOpReadyTime": "11:00",
@@ -1749,11 +2264,11 @@
       "status": "in_case",
       "cleaningStatus": "clean",
       "assignedStaff": {
-        "anesthesiologist": "Prichard, C (MD)",
+        "anesthesiologist": "Jones, E (MD)",
         "crna": "Taylor, K. (CRNA)",
         "circulatorRN": "Holly W. (RN)",
         "scrubTech": "Stephanie (ST)",
-        "anesTech": "Carlos G. (AT)"
+        "anesTech": "Sam R."
       }
     },
     {
@@ -2052,42 +2567,54 @@
       "username": "runner",
       "displayName": "Board Runner (Alaniz, P / Veronica N)",
       "role": "board_runner",
-      "pin": "1234"
+      "pin": "1234",
+      "password": "password123",
+      "active": true
     },
     {
       "id": "u2",
       "username": "anes",
       "displayName": "Dr. Alaniz, P (Anesthesiologist)",
       "role": "anesthesia",
-      "pin": "2468"
+      "pin": "2468",
+      "password": "password123",
+      "active": true
     },
     {
       "id": "u3",
       "username": "chargern",
       "displayName": "Veronica N. (Charge RN)",
       "role": "charge_rn",
-      "pin": "5555"
+      "pin": "5555",
+      "password": "password123",
+      "active": true
     },
     {
       "id": "u4",
       "username": "circulator",
       "displayName": "Marybeth Q. (Circulating RN)",
       "role": "circulator",
-      "pin": "1111"
+      "pin": "1111",
+      "password": "password123",
+      "active": true
     },
     {
       "id": "u5",
       "username": "admin",
       "displayName": "OR Director (Superuser)",
       "role": "superuser",
-      "pin": "9999"
+      "pin": "9999",
+      "password": "adminpassword",
+      "active": true
     },
     {
       "id": "u6",
       "username": "guest",
       "displayName": "Clinical Viewer",
       "role": "basic_viewer",
-      "pin": ""
+      "pin": "",
+      "password": "",
+      "active": true
     }
   ],
   "emrConfig": {
@@ -2104,188 +2631,8 @@
   },
   "auditLogs": [
     {
-      "id": "log-1791747302283",
-      "timestamp": "02:35:02 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "Updated H&P status to yes",
-      "patientId": "pt-1015987",
-      "patientName": "Perez, Jose Ernesto",
-      "details": "Updated H&P status to yes"
-    },
-    {
-      "id": "log-1791747300912",
-      "timestamp": "02:35:00 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "Updated H&P status to pending",
-      "patientId": "pt-1015987",
-      "patientName": "Perez, Jose Ernesto",
-      "details": "Updated H&P status to pending"
-    },
-    {
-      "id": "log-1791684404204",
-      "timestamp": "09:06:44 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "Updated schedInRoom to 11:00",
-      "patientId": "pt-1016412",
-      "patientName": "Santos, Maria",
-      "details": "Updated schedInRoom to 11:00"
-    },
-    {
-      "id": "log-1791684389889",
-      "timestamp": "09:06:29 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "Updated schedInRoom to 1100",
-      "patientId": "pt-1016412",
-      "patientName": "Santos, Maria",
-      "details": "Updated schedInRoom to 1100"
-    },
-    {
-      "id": "log-1791684267556",
-      "timestamp": "09:04:27 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684259586",
-      "timestamp": "09:04:19 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684246668",
-      "timestamp": "09:04:06 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684245887",
-      "timestamp": "09:04:05 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684245228",
-      "timestamp": "09:04:05 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684244471",
-      "timestamp": "09:04:04 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684242668",
-      "timestamp": "09:04:02 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684241415",
-      "timestamp": "09:04:01 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684236585",
-      "timestamp": "09:03:56 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684235241",
-      "timestamp": "09:03:55 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-1016330",
-      "patientName": "Kim, David",
-      "details": "Updated case 1016330 (MC OR 03)"
-    },
-    {
-      "id": "log-1791684214020",
-      "timestamp": "09:03:34 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
-      "id": "log-1791684212031",
-      "timestamp": "09:03:32 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
-      "id": "log-1791684210451",
-      "timestamp": "09:03:30 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
-      "id": "log-1791684202722",
-      "timestamp": "09:03:22 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
-      "id": "log-1791684201192",
-      "timestamp": "09:03:21 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
-      "id": "log-1791684199807",
-      "timestamp": "09:03:19 PM",
-      "user": "Board Runner (Alaniz, P / Veronica N)",
-      "action": "PATIENT_UPDATED",
-      "patientId": "pt-ds03-2",
-      "patientName": "Strauss, Joan",
-      "details": "Updated case 988194 (MC DS 03)"
-    },
-    {
       "id": "log-1",
-      "timestamp": "09:02 PM",
+      "timestamp": "07:36 PM",
       "user": "Night Charge RN",
       "action": "ADD_ON_CREATED",
       "patientId": "pt-1015987",
@@ -2294,369 +2641,12 @@
     },
     {
       "id": "log-2",
-      "timestamp": "09:02 PM",
+      "timestamp": "07:36 PM",
       "user": "Alaniz, P (MD)",
       "action": "PREOP_ANESTHESIA_READY",
       "patientId": "pt-1015503",
       "patientName": "Cortez, Linda",
       "details": "Anesthesia pre-op complete & cleared for OR 05"
-    }
-  ],
-  "departments": [
-    {
-      "id": "dept-all",
-      "name": "All Departments",
-      "code": "ALL",
-      "description": "System-wide health facility census",
-      "active": true,
-      "displayOrder": 0
-    },
-    {
-      "id": "dept-main",
-      "name": "Main OR",
-      "code": "MAIN_OR",
-      "description": "Inpatient surgical suites (Suites 01-08)",
-      "active": true,
-      "displayOrder": 1
-    },
-    {
-      "id": "dept-ds",
-      "name": "Day Surgery",
-      "code": "DAY_SURG",
-      "description": "Ambulatory surgery pavilion (Suites DS 01-05)",
-      "active": true,
-      "displayOrder": 2
-    },
-    {
-      "id": "dept-ortho",
-      "name": "Ortho OR",
-      "code": "ORTHO",
-      "description": "Specialized orthopedic & joint reconstruction suites",
-      "active": true,
-      "displayOrder": 3
-    },
-    {
-      "id": "dept-endo",
-      "name": "Endo",
-      "code": "ENDO",
-      "description": "Endoscopy & GI procedural suites",
-      "active": true,
-      "displayOrder": 4
-    },
-    {
-      "id": "dept-cv",
-      "name": "CV Heart & Vascular",
-      "code": "CV",
-      "description": "Cardiovascular suites & hybrid cath labs",
-      "active": true,
-      "displayOrder": 5
-    },
-    {
-      "id": "dept-neuro",
-      "name": "Neuro Suites",
-      "code": "NEURO",
-      "description": "Cranial & spinal specialized suites",
-      "active": true,
-      "displayOrder": 6
-    }
-  ],
-  "staffRoster": [
-    {
-      "id": "staff-1",
-      "staffName": "Peter Alaniz, MD",
-      "displayName": "Alaniz, P (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Main OR",
-      "cell": "x5501 / (713) 555-0101",
-      "active": true
-    },
-    {
-      "id": "staff-2",
-      "staffName": "Eric Jones, MD",
-      "displayName": "Jones, E (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Day Surgery",
-      "cell": "x5502 / (713) 555-0102",
-      "active": true
-    },
-    {
-      "id": "staff-3",
-      "staffName": "Caroline Prichard, MD",
-      "displayName": "Prichard, C (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Day Surgery",
-      "cell": "x5503 / (713) 555-0103",
-      "active": true
-    },
-    {
-      "id": "staff-4",
-      "staffName": "Francis Gelpi-Hammond, MD",
-      "displayName": "Gelpi-Hammond, F (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Day Surgery",
-      "cell": "x5504 / (713) 555-0104",
-      "active": true
-    },
-    {
-      "id": "staff-5",
-      "staffName": "David Chen, MD",
-      "displayName": "Chen, D (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Main OR",
-      "cell": "x5505 / (713) 555-0105",
-      "active": true
-    },
-    {
-      "id": "staff-6",
-      "staffName": "Ricardo Perez, MD",
-      "displayName": "Perez, R (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Main OR",
-      "cell": "x5506 / (713) 555-0106",
-      "active": true
-    },
-    {
-      "id": "staff-7",
-      "staffName": "Sanjay Patel, MD",
-      "displayName": "Patel, S (MD)",
-      "role": "Anesthesiologist",
-      "environmentHome": "Main OR",
-      "cell": "x5507 / (713) 555-0107",
-      "active": true
-    },
-    {
-      "id": "staff-10",
-      "staffName": "Katie Taylor, CRNA",
-      "displayName": "Taylor, K. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Day Surgery",
-      "cell": "x5511 / (713) 555-0111",
-      "active": true
-    },
-    {
-      "id": "staff-11",
-      "staffName": "Erica Brown, CRNA",
-      "displayName": "Erica B. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Day Surgery",
-      "cell": "x5512 / (713) 555-0112",
-      "active": true
-    },
-    {
-      "id": "staff-12",
-      "staffName": "Marcus Jackson, CRNA",
-      "displayName": "Marcus J. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Day Surgery",
-      "cell": "x5513 / (713) 555-0113",
-      "active": true
-    },
-    {
-      "id": "staff-13",
-      "staffName": "Indy Bell, CRNA",
-      "displayName": "Indy B. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Main OR",
-      "cell": "x5514 / (713) 555-0114",
-      "active": true
-    },
-    {
-      "id": "staff-14",
-      "staffName": "Michael Vargas, CRNA",
-      "displayName": "Vargas, M. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Main OR",
-      "cell": "x5515 / (713) 555-0115",
-      "active": true
-    },
-    {
-      "id": "staff-15",
-      "staffName": "Deanna Miller, CRNA",
-      "displayName": "Miller, D. (CRNA)",
-      "role": "CRNA",
-      "environmentHome": "Main OR",
-      "cell": "x5516 / (713) 555-0116",
-      "active": true
-    },
-    {
-      "id": "staff-20",
-      "staffName": "Holly Wright, RN",
-      "displayName": "Holly W. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Day Surgery",
-      "cell": "x5521 / (713) 555-0121",
-      "active": true
-    },
-    {
-      "id": "staff-21",
-      "staffName": "Kashish Mehta, RN",
-      "displayName": "Kashish M. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Day Surgery",
-      "cell": "x5522 / (713) 555-0122",
-      "active": true
-    },
-    {
-      "id": "staff-22",
-      "staffName": "Arlene Santos, RN",
-      "displayName": "Arlene S. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Day Surgery",
-      "cell": "x5523 / (713) 555-0123",
-      "active": true
-    },
-    {
-      "id": "staff-23",
-      "staffName": "Jennifer Wilson, RN",
-      "displayName": "Jennifer W. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Main OR",
-      "cell": "x5524 / (713) 555-0124",
-      "active": true
-    },
-    {
-      "id": "staff-24",
-      "staffName": "Marybeth Quinn, RN",
-      "displayName": "Marybeth Q. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Main OR",
-      "cell": "x5525 / (713) 555-0125",
-      "active": true
-    },
-    {
-      "id": "staff-25",
-      "staffName": "Sarah Thompson, RN",
-      "displayName": "Sarah T. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Main OR",
-      "cell": "x5526 / (713) 555-0126",
-      "active": true
-    },
-    {
-      "id": "staff-26",
-      "staffName": "Veronica Nguyen, RN",
-      "displayName": "Veronica N. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Main OR",
-      "cell": "x5527 / (713) 555-0127",
-      "active": true
-    },
-    {
-      "id": "staff-27",
-      "staffName": "Tanya Jackson, RN",
-      "displayName": "Jackson, T. (RN)",
-      "role": "Circulator RN",
-      "environmentHome": "Main OR",
-      "cell": "x5528 / (713) 555-0128",
-      "active": true
-    },
-    {
-      "id": "staff-30",
-      "staffName": "Stephanie Gomez, CST",
-      "displayName": "Stephanie (ST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Day Surgery",
-      "cell": "x5531 / (713) 555-0131",
-      "active": true
-    },
-    {
-      "id": "staff-31",
-      "staffName": "Candace Smith, CST",
-      "displayName": "Candace S. (ST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Day Surgery",
-      "cell": "x5532 / (713) 555-0132",
-      "active": true
-    },
-    {
-      "id": "staff-32",
-      "staffName": "Nathalie Simon, CST",
-      "displayName": "Nathalie S. (ST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Day Surgery",
-      "cell": "x5533 / (713) 555-0133",
-      "active": true
-    },
-    {
-      "id": "staff-33",
-      "staffName": "David Liu, CST",
-      "displayName": "David L. (ST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Main OR",
-      "cell": "x5534 / (713) 555-0134",
-      "active": true
-    },
-    {
-      "id": "staff-34",
-      "staffName": "Kenji Mori, CST",
-      "displayName": "Kenji M. (ST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Main OR",
-      "cell": "x5535 / (713) 555-0135",
-      "active": true
-    },
-    {
-      "id": "staff-35",
-      "staffName": "Hector Reyes, CST",
-      "displayName": "Reyes, H. (CST)",
-      "role": "Scrub Tech",
-      "environmentHome": "Main OR",
-      "cell": "x5536 / (713) 555-0136",
-      "active": true
-    },
-    {
-      "id": "staff-40",
-      "staffName": "Sam Rodriguez, AT",
-      "displayName": "Sam R. (AT)",
-      "role": "Anes Tech",
-      "environmentHome": "Main OR",
-      "cell": "x5541 / (713) 555-0141",
-      "active": true
-    },
-    {
-      "id": "staff-41",
-      "staffName": "Carlos Gonzalez, AT",
-      "displayName": "Carlos G. (AT)",
-      "role": "Anes Tech",
-      "environmentHome": "Day Surgery",
-      "cell": "x5542 / (713) 555-0142",
-      "active": true
-    },
-    {
-      "id": "staff-50",
-      "staffName": "Rachel Martinez, RN",
-      "displayName": "Rachel M. (RN)",
-      "role": "Pre-Op RN",
-      "environmentHome": "Pre-Op Holding",
-      "cell": "x5551 / (713) 555-0151",
-      "active": true
-    },
-    {
-      "id": "staff-51",
-      "staffName": "Kevin Tran, RN",
-      "displayName": "Kevin T. (RN)",
-      "role": "Pre-Op RN",
-      "environmentHome": "Pre-Op Holding",
-      "cell": "x5552 / (713) 555-0152",
-      "active": true
-    },
-    {
-      "id": "staff-52",
-      "staffName": "Brenda Hayes, RN",
-      "displayName": "Brenda H. (RN)",
-      "role": "PACU RN",
-      "environmentHome": "PACU",
-      "cell": "x5553 / (713) 555-0153",
-      "active": true
-    },
-    {
-      "id": "staff-53",
-      "staffName": "Lisa Cooper, RN",
-      "displayName": "Lisa C. (RN)",
-      "role": "PACU RN",
-      "environmentHome": "PACU",
-      "cell": "x5554 / (713) 555-0154",
-      "active": true
     }
   ]
 }

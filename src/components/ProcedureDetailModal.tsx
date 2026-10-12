@@ -6,7 +6,8 @@ import { validateRoomTurnover } from '@/lib/turnoverValidation';
 import { 
   X, Check, AlertCircle, Clock, UserCheck, 
   ShieldAlert, Phone, FileText, Stethoscope, 
-  Activity, ArrowRight, HeartPulse, Sparkles, Plus, AlertTriangle, Edit3 
+  Activity, ArrowRight, HeartPulse, Sparkles, Plus, AlertTriangle, Edit3,
+  Heart, TestTube, PackageCheck, ShieldCheck, CheckCircle2 
 } from 'lucide-react';
 
 interface ProcedureDetailModalProps {
@@ -30,7 +31,9 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
 }) => {
   if (!patient) return null;
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'preop' | 'intraop' | 'pacu'>('overview');
+  const [activeTab, setActiveTab] = useState<'clearance' | 'overview' | 'preop' | 'intraop' | 'pacu'>(
+    patient.currentPhase === 'scheduled' ? 'clearance' : 'overview'
+  );
   const [localComments, setLocalComments] = useState(patient.comments || '');
   const [localDelay, setLocalDelay] = useState(patient.delayReason || '');
   const [localRecoveryNeeds, setLocalRecoveryNeeds] = useState(patient.recoveryNeeds || '');
@@ -375,10 +378,11 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
           gap: 16
         }}>
           {[
-            { id: 'overview', label: 'Details & Misc Info' },
-            { id: 'preop', label: 'Pre-Op & Holding' },
-            { id: 'intraop', label: 'In Process (Intra-Op)' },
-            { id: 'pacu', label: 'PACU & Phase II Recovery' }
+            { id: 'clearance', label: '1. Scheduling & Clearance' },
+            { id: 'overview', label: '2. Details & Demographics' },
+            { id: 'preop', label: '3. Pre-Op & Holding' },
+            { id: 'intraop', label: '4. In Process (Intra-Op)' },
+            { id: 'pacu', label: '5. PACU & Phase II Recovery' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -402,7 +406,362 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
 
         {/* Tab Content Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {/* TAB 1: DETAILS & MISC */}
+          {/* TAB 0: SCHEDULING & CLEARANCE (STAGE 1) */}
+          {activeTab === 'clearance' && (() => {
+            const clearance = patient.clearanceStatus || patient.clearance || {
+              labsCleared: true,
+              ekgCleared: true,
+              cardiacCleared: true,
+              hpInChart: true,
+              consentsOnFile: true,
+              implantsVerified: true
+            };
+            return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Clearance Stage Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.05))',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 16
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: 'var(--phase-sched-bg)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)'
+                  }}>
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--phase-sched-bg)' }}>
+                        STAGE 1: SCHEDULING & CLEARANCE DOSSIER
+                      </span>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: patient.currentPhase === 'scheduled' ? 'rgba(79, 70, 229, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                        color: patient.currentPhase === 'scheduled' ? 'var(--phase-sched-bg)' : 'var(--phase-surgery-bg)',
+                        border: '1px solid currentColor'
+                      }}>
+                        {patient.currentPhase === 'scheduled' ? 'PIPELINE ACTIVE' : `PHASE: ${patient.currentPhase.toUpperCase()}`}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 12 }}>
+                      <span>ASA Physical Status: <strong style={{ color: 'var(--text-primary)' }}>{clearance?.asaClass || 'ASA III'}</strong></span>
+                      <span>•</span>
+                      <span>PAT Clinic: <strong style={{ color: clearance?.patClinicStatus === 'completed' ? 'var(--phase-surgery-bg)' : 'var(--accent-primary)' }}>{(clearance?.patClinicStatus || 'completed').toUpperCase()}</strong></span>
+                      <span>•</span>
+                      <span>NPO Status: <strong style={{ color: 'var(--alert-amber)' }}>{clearance?.npoStatus || 'NPO since 00:00'}</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                {patient.currentPhase === 'scheduled' ? (
+                  <button
+                    type="button"
+                    onClick={() => handlePhaseAdvance('preop')}
+                    style={{
+                      background: 'var(--phase-preop-bg)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '10px 18px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)'
+                    }}
+                  >
+                    <span>Promote to Stage 2: Pre-Op Holding</span>
+                    <ArrowRight size={16} />
+                  </button>
+                ) : (
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: 'var(--phase-surgery-bg)',
+                    background: 'rgba(22, 163, 74, 0.1)',
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    border: '1px solid var(--phase-surgery-bg)'
+                  }}>
+                    ✓ Cleared & Promoted to {patient.currentPhase.toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              {/* 4 Core Pillars Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 18 }}>
+                {/* 1. Regulatory & Consents */}
+                <div style={{
+                  background: 'var(--surface-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 13, color: 'var(--text-primary)' }}>
+                      <FileText size={16} color="var(--phase-sched-bg)" />
+                      <span>1. Regulatory & Consents</span>
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>CMS / Joint Commission</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, marginBottom: 4, color: 'var(--text-secondary)' }}>H&P Status:</label>
+                      <select
+                        value={patient.hpComplete}
+                        onChange={(e) => onUpdatePatient(patient.id, { hpComplete: e.target.value as any })}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 700 }}
+                      >
+                        <option value="yes">Completed (Valid)</option>
+                        <option value="pending">Pending Attestation</option>
+                        <option value="na">N/A</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, marginBottom: 4, color: 'var(--text-secondary)' }}>H&P Date (30-day limit):</label>
+                      <input
+                        type="text"
+                        value={clearance?.hpDate || '10/05/2026'}
+                        onChange={(e) => onUpdatePatient(patient.id, {
+                          clearance: { ...clearance, hpDate: e.target.value } as any
+                        })}
+                        placeholder="MM/DD/YYYY"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font-mono)' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, marginBottom: 4, color: 'var(--text-secondary)' }}>Surgical Consent:</label>
+                      <select
+                        value={patient.surgicalConsent}
+                        onChange={(e) => onUpdatePatient(patient.id, { surgicalConsent: e.target.value as any })}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 700 }}
+                      >
+                        <option value="signed">Signed & In Chart</option>
+                        <option value="pending">Pending Signature</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, marginBottom: 4, color: 'var(--text-secondary)' }}>Anesthesia Consent:</label>
+                      <select
+                        value={patient.anesthesiaConsent}
+                        onChange={(e) => onUpdatePatient(patient.id, { anesthesiaConsent: e.target.value as any })}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-medium)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 700 }}
+                      >
+                        <option value="signed">Signed & In Chart</option>
+                        <option value="pending">Pending Signature</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'var(--surface-card)', padding: 10, borderRadius: 6, border: '1px solid var(--border-light)', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Anesthesia Pre-Op Evaluation (PAT):</span>
+                    <button
+                      type="button"
+                      onClick={() => onUpdatePatient(patient.id, { anesthesiaReady: !patient.anesthesiaReady })}
+                      style={{
+                        background: patient.anesthesiaReady ? 'var(--phase-surgery-bg)' : 'var(--surface-subtle)',
+                        color: patient.anesthesiaReady ? '#fff' : 'var(--text-secondary)',
+                        border: '1px solid var(--border-medium)',
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {patient.anesthesiaReady ? '✓ Anes Evaluation Cleared' : 'Pending Anes Eval'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Cardiology & Medical Clearances */}
+                <div style={{
+                  background: 'var(--surface-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 13, color: 'var(--text-primary)' }}>
+                      <Heart size={16} color="var(--alert-red)" />
+                      <span>2. Cardiology & Specialty Clearance</span>
+                    </div>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      background: clearance?.cardiologyClearance === 'cleared' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: clearance?.cardiologyClearance === 'cleared' ? 'var(--phase-surgery-bg)' : 'var(--alert-red)'
+                    }}>
+                      {(clearance?.cardiologyClearance || 'cleared').toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Clearance Letter / Cardiology Note:</span>
+                      <div style={{ background: 'var(--surface-card)', padding: '8px 10px', borderRadius: 4, border: '1px solid var(--border-light)', marginTop: 4, color: 'var(--text-primary)', fontSize: 11, lineHeight: 1.4 }}>
+                        {clearance?.cardiologyNote || 'No specialty cardiac restrictions noted.'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Stress / Echo Date:</span>
+                        <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', marginTop: 2, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                          {clearance?.stressTestDate || '08/14/2026 (EF 55%)'}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Anticoagulation Hold:</span>
+                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--alert-amber)', padding: '6px 8px', borderRadius: 4, border: '1px solid rgba(245, 158, 11, 0.3)', marginTop: 2, fontWeight: 700, fontSize: 11 }}>
+                          {clearance?.anticoagulationPlan || 'None / Cleared'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Diagnostic Workup (EKG & Labs) */}
+                <div style={{
+                  background: 'var(--surface-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 13, color: 'var(--text-primary)' }}>
+                      <TestTube size={16} color="var(--phase-pacu-bg)" />
+                      <span>3. Pre-Admission Diagnostic Workup</span>
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>EKG & Blood Bank</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>12-Lead EKG Rhythm:</span>
+                        <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{clearance?.ekgDate || '10/06/2026'}</span>
+                      </div>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                        {clearance?.ekgNote || 'NSR @ 68 bpm, PR 160ms, QTc 418ms. Normal.'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Diagnostic Laboratory Workup:</span>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', marginTop: 2, fontSize: 11, color: 'var(--text-primary)' }}>
+                        {clearance?.labsNote || 'CBC, BMP, PT/INR cleared. Potassium 4.2, Cr 0.8, Hgb 13.8.'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', fontSize: 11 }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Type & Screen:</span>
+                        <div style={{ fontWeight: 800, color: clearance?.typeAndScreen === 'valid' ? 'var(--phase-surgery-bg)' : 'var(--alert-amber)' }}>
+                          {(clearance?.typeAndScreen || 'valid').toUpperCase()} (72h limit)
+                        </div>
+                      </div>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', fontSize: 11 }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Crossmatch Units:</span>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                          {clearance?.unitsCrossmatched ? `${clearance.unitsCrossmatched} Units PRBCs on hold` : 'None required'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Implants, Logistics & Day-Of Prep */}
+                <div style={{
+                  background: 'var(--surface-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-light)',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 13, color: 'var(--text-primary)' }}>
+                      <PackageCheck size={16} color="var(--phase-preop-bg)" />
+                      <span>4. Implants, Trays & Logistics</span>
+                    </div>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      background: clearance?.implantsConfirmed ? 'rgba(22, 163, 74, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                      color: clearance?.implantsConfirmed ? 'var(--phase-surgery-bg)' : 'var(--alert-amber)'
+                    }}>
+                      {clearance?.implantsConfirmed ? 'IMPLANTS ON SITE' : 'IMPLANTS PENDING'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Implant & Specialized Tray Specs:</span>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', marginTop: 2, fontSize: 11, color: 'var(--text-primary)' }}>
+                        {clearance?.implantsNote || 'Standard surgical instrumentation on schedule.'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>PAT Assessment & Day-of Arrival:</span>
+                      <div style={{ background: 'var(--surface-card)', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--border-light)', marginTop: 2, fontSize: 11, color: 'var(--text-primary)' }}>
+                        {clearance?.patNotes || 'Patient confirmed arrival time 06:15 with family companion.'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-card)', padding: '6px 10px', borderRadius: 4, border: '1px solid var(--border-light)', fontSize: 11 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Pre-Op Fasting & Prep Instructions:</span>
+                      <span style={{ fontWeight: 800, color: clearance?.preOpInstructionsSent ? 'var(--phase-surgery-bg)' : 'var(--alert-amber)' }}>
+                        {clearance?.preOpInstructionsSent ? '✓ Sent to Patient' : 'Pending Send'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            );
+          })()}
+
+          {/* TAB 2: DETAILS & MISC */}
           {activeTab === 'overview' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
