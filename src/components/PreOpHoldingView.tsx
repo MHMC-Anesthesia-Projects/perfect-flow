@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { EpicPatientCase } from '@/types/journey';
 import { 
   Check, X, Phone, UserCheck, Stethoscope, AlertTriangle, 
@@ -33,8 +33,44 @@ export const PreOpHoldingView: React.FC<PreOpHoldingViewProps> = ({
   };
   const [filterReadyOnly, setFilterReadyOnly] = useState<boolean>(false);
 
-  // Filter patients that are currently in Pre-Op or scheduled next
-  const allPreOpPatients = patients.filter(p => p.currentPhase === 'preop' || (p.currentPhase === 'scheduled' && p.preOpBay));
+  // Natural sorting helper: order strictly by bay number (Bay 01, Bay 02, Bay 03, Bay 04, Bay 05...)
+  const compareByBayNumber = (a: EpicPatientCase, b: EpicPatientCase) => {
+    const bayA = a.preOpBay?.trim() || '';
+    const bayB = b.preOpBay?.trim() || '';
+
+    // Extract digits from bay string if present (e.g. "Bay 01" -> 1, "Bay 2" -> 2)
+    const matchA = bayA.match(/\d+/);
+    const matchB = bayB.match(/\d+/);
+
+    if (matchA && matchB) {
+      const numA = parseInt(matchA[0], 10);
+      const numB = parseInt(matchB[0], 10);
+      if (numA !== numB) {
+        return numA - numB;
+      }
+    }
+
+    // Items with an assigned bay always come first
+    if (bayA && !bayB) return -1;
+    if (!bayA && bayB) return 1;
+
+    // Natural alphanumeric comparison
+    if (bayA && bayB) {
+      return bayA.localeCompare(bayB, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    // Fallback if neither has a bay: order by scheduled time or room number
+    return (a.scheduledStartTime || a.schedInRoom || a.roomNumber || '').localeCompare(
+      b.scheduledStartTime || b.schedInRoom || b.roomNumber || ''
+    );
+  };
+
+  // Filter patients that are currently in Pre-Op or scheduled next, sorted strictly by bay number
+  const allPreOpPatients = useMemo(() => {
+    return patients
+      .filter(p => p.currentPhase === 'preop' || (p.currentPhase === 'scheduled' && p.preOpBay))
+      .sort(compareByBayNumber);
+  }, [patients]);
 
   const formatTimeNow = () => {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -53,9 +89,12 @@ export const PreOpHoldingView: React.FC<PreOpHoldingViewProps> = ({
     );
   };
 
-  const preOpPatients = filterReadyOnly 
-    ? allPreOpPatients.filter(isReadyForOR) 
-    : allPreOpPatients;
+  const preOpPatients = useMemo(() => {
+    return (filterReadyOnly 
+      ? allPreOpPatients.filter(isReadyForOR) 
+      : allPreOpPatients
+    ).sort(compareByBayNumber);
+  }, [allPreOpPatients, filterReadyOnly]);
 
   return (
     <div style={{
